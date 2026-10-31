@@ -1,0 +1,5415 @@
+{
+	"profile_version": 1,
+	"source": {
+		"title": "VantarIS API",
+		"api_version": "1",
+		"openapi": "3.1.0",
+		"kind": "file",
+		"name": "openapi.vantaris.json",
+		"sha256": "1f1b648d6992d60fad732fbd4adae020a57f96816ba207aaf27c06485e55da6f"
+	},
+	"api": {
+		"default_base_url": "https://vantaris.app",
+		"base_path": "/api/v1",
+		"auth": {
+			"type": "bearer",
+			"header": "Authorization",
+			"prefix": "Bearer ",
+			"key_pattern": "^vtk_[0-9a-f]{12}_"
+		},
+		"ping": {
+			"method": "GET",
+			"path": "/ping"
+		},
+		"pagination": {
+			"limit_param": "limit",
+			"cursor_param": "cursor",
+			"next_cursor_field": "next_cursor",
+			"items_field": "data",
+			"max_limit": 500
+		},
+		"headers": {
+			"if_match": "If-Match",
+			"idempotency_key": "Idempotency-Key"
+		},
+		"errors": {
+			"media_type": "application/problem+json",
+			"fields": [
+				"title",
+				"status",
+				"code",
+				"detail",
+				"reason",
+				"errors",
+				"parameter"
+			]
+		}
+	},
+	"resources": [
+		{
+			"key": "incident",
+			"label_en": "Incident",
+			"label_en_plural": "Incidents",
+			"label_de": "Ticket",
+			"label_de_plural": "Tickets",
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "create",
+					"label_en": "Create incident",
+					"label_de": "Vorfall anlegen",
+					"operationId": "createIncidents",
+					"method": "POST",
+					"path": "/incidents",
+					"scope": "data:write",
+					"summary_en": "Create Incidents",
+					"summary_de": "Vorfälle: anlegen",
+					"description_en": "With tags, links and dynamic fields in one transaction. Rights: write on the module and the category (requirements, standards: the parent in the writable subtree). Element quota of the plan: 403 quota_exceeded/elements. Default status: the first of the type.",
+					"description_de": "Mit Schlagworten, Verknüpfungen und dynamischen Feldern in einer Transaktion. Rechte: Schreiben im Modul und in der Kategorie (Anforderungen, Normen: der Elternteil im schreibbaren Teilbaum). Elementkontingent des Abos: 403 quota_exceeded/elements. Vorgabestatus: der erste des Typs.",
+					"params": [
+						{
+							"name": "Idempotency-Key",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[A-Za-z0-9_-]{8,128}$",
+							"description_en": "repeats of the same request within 24 hours create nothing twice",
+							"description_de": "Wiederholungen derselben Anfrage innerhalb von 24 Stunden legen nichts doppelt an",
+							"role": "idempotency_key"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "kind",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"enum": [
+									"element"
+								],
+								"description_en": "kind, set when creating",
+								"description_de": "Art, beim Anlegen festgelegt"
+							},
+							{
+								"name": "name",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "incident_type",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "incident type: id of a type of the tenant (/meta scales.incident_type)",
+								"description_de": "Vorfalltyp: ID eines Typs des Mandanten (/meta scales.incident_type)"
+							},
+							{
+								"name": "follow_up_date",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"format": "date",
+								"description_en": "follow-up date (YYYY-MM-DD)",
+								"description_de": "Wiedervorlage (JJJJ-MM-TT)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "links",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "partner path => ids (readable partners of writable types, /meta links)",
+								"description_de": "Pfad des Partners => IDs (lesbare Partner der schreibbaren Typen, /meta links)"
+							},
+							{
+								"name": "fields",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "dynamic fields: field id => value (all or none)",
+								"description_de": "dynamische Felder: Feld-ID => Wert (alle oder keiner)"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "get",
+					"label_en": "Get incident",
+					"label_de": "Vorfall lesen",
+					"operationId": "getIncidentsItem",
+					"method": "GET",
+					"path": "/incidents/{id}",
+					"scope": "data:read",
+					"summary_en": "One Incidents",
+					"summary_de": "Vorfälle: ein Element",
+					"description_en": "404 when it does not exist or the key cannot read it. include: links, fields, computed, files.",
+					"description_de": "404, wenn es das Element nicht gibt oder der Schlüssel es nicht lesen darf. include: links, fields, computed, files.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "include",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list: links, fields, computed, files",
+							"description_de": "Kommaliste: links, fields, computed, files"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List incidents",
+					"label_de": "Vorfall: Liste",
+					"operationId": "listIncidents",
+					"method": "GET",
+					"path": "/incidents",
+					"scope": "data:read",
+					"summary_en": "List Incidents",
+					"summary_de": "Vorfälle auflisten",
+					"description_en": "Elements the key can read (role: menu, category or subtree, booking), keyset pages. Without description; detail for that.",
+					"description_de": "Elemente, die der Schlüssel lesen darf (Rolle: Menü, Kategorie bzw. Teilbaum, Buchung), Seiten mit Cursor. Ohne Beschreibung; dafür das Detail.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"id",
+								"-id",
+								"name",
+								"-name",
+								"changed_at",
+								"-changed_at",
+								"created_at",
+								"-created_at",
+								"review_date",
+								"-review_date"
+							],
+							"description_en": "sort, \"-\" descending; review_date without date last",
+							"description_de": "Sortierung, „-“ absteigend; review_date ohne Datum am Ende"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"element"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the name",
+							"description_de": "Teil des Namens"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed at or after (YYYY-MM-DD or …Z)",
+							"description_de": "geändert ab (YYYY-MM-DD oder …Z)"
+						},
+						{
+							"name": "review_before",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date before",
+							"description_de": "Wiedervorlage vor"
+						},
+						{
+							"name": "review_after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date after",
+							"description_de": "Wiedervorlage nach"
+						},
+						{
+							"name": "status",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "status key or id; only kinds that carry a status",
+							"description_de": "Schlüssel oder ID des Status; nur Arten mit Status",
+							"lookup": "status"
+						},
+						{
+							"name": "open",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"true",
+								"false"
+							],
+							"description_en": "only open ones (true: only kinds that carry a status)",
+							"description_de": "nur offene (true: nur Arten mit Status)"
+						},
+						{
+							"name": "owner",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "owner reference",
+							"description_de": "Referenz des Verantwortlichen",
+							"lookup": "owner"
+						},
+						{
+							"name": "tag",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "free tag",
+							"description_de": "freies Schlagwort",
+							"lookup": "tag"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				},
+				{
+					"key": "update",
+					"label_en": "Update incident",
+					"label_de": "Vorfall ändern",
+					"operationId": "updateIncidentsItem",
+					"method": "PATCH",
+					"path": "/incidents/{id}",
+					"scope": "data:write",
+					"summary_en": "Change Incidents",
+					"summary_de": "Vorfälle: ändern",
+					"description_en": "Only the fields sent. Category: old and new must be writable. A closed incident or task: 409 closed.",
+					"description_de": "Nur gesendete Felder. Kategorie: alte und neue müssen schreibbar sein. Geschlossener Vorfall bzw. geschlossene Aufgabe: 409 closed.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "name",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "incident_type",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "incident type: id of a type of the tenant (/meta scales.incident_type)",
+								"description_de": "Vorfalltyp: ID eines Typs des Mandanten (/meta scales.incident_type)"
+							},
+							{
+								"name": "follow_up_date",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"format": "date",
+								"description_en": "follow-up date (YYYY-MM-DD)",
+								"description_de": "Wiedervorlage (JJJJ-MM-TT)"
+							}
+						],
+						"min_properties": 1
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "set_status",
+					"label_en": "Set status of incident",
+					"label_de": "Vorfall: Status setzen",
+					"operationId": "setIncidentsStatus",
+					"method": "PUT",
+					"path": "/incidents/{id}/status",
+					"scope": "data:write",
+					"summary_en": "Set the status of Incidents",
+					"summary_de": "Vorfälle: Status setzen",
+					"description_en": "Key or id (/meta). Reopening a closed incident or task needs the delete right (403 forbidden/reopen_needs_delete_right). A standard with a linked requirement in status 40, 41, 42 or 44: 409 conflict/derived_status. Unchanged: 200 without a log entry.",
+					"description_de": "Schlüssel oder ID (/meta). Einen geschlossenen Vorfall bzw. eine geschlossene Aufgabe wieder öffnen braucht das Löschrecht (403 forbidden/reopen_needs_delete_right). Eine Norm mit verknüpfter Anforderung im Status 40, 41, 42 oder 44: 409 conflict/derived_status. Unverändert: 200 ohne Protokolleintrag.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "status",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"lookup": "status"
+							}
+						]
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "add_comment",
+					"label_en": "Comment on incident",
+					"label_de": "Vorfall kommentieren",
+					"operationId": "addIncidentsComment",
+					"method": "POST",
+					"path": "/incidents/{id}/comments",
+					"scope": "data:write",
+					"summary_en": "Comment on Incidents",
+					"summary_de": "Vorfälle: kommentieren",
+					"description_en": "Comments cannot be changed or deleted; they go with the element. close=true closes the element as well.",
+					"description_de": "Kommentare lassen sich weder ändern noch löschen; sie gehen mit dem Element. close=true schließt das Element zugleich.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "Idempotency-Key",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[A-Za-z0-9_-]{8,128}$",
+							"description_en": "repeats of the same request within 24 hours create nothing twice",
+							"description_de": "Wiederholungen derselben Anfrage innerhalb von 24 Stunden legen nichts doppelt an",
+							"role": "idempotency_key"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "text_html",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"html": true,
+								"description_en": "HTML, cleaned, at most 60 000 bytes",
+								"description_de": "HTML, bereinigt, höchstens 60 000 Byte"
+							},
+							{
+								"name": "close",
+								"required": false,
+								"type": "boolean",
+								"nullable": false,
+								"description_en": "comment and close (like the status route)",
+								"description_de": "kommentieren und schließen (wie die Status-Route)"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object",
+						"items_field": "data"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"status": [
+					{
+						"operationId": "getIncidentsMeta",
+						"method": "GET",
+						"path": "/incidents/meta",
+						"query": {},
+						"items": "data.statuses",
+						"value": "key",
+						"label": "label",
+						"paginated": false,
+						"label_en": "Value lists of incidents",
+						"label_de": "Vorfall: Wertelisten"
+					}
+				],
+				"category": [
+					{
+						"operationId": "getIncidentsMeta",
+						"method": "GET",
+						"path": "/incidents/meta",
+						"query": {},
+						"items": "data.categories",
+						"value": "id",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Value lists of incidents",
+						"label_de": "Vorfall: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "task",
+			"label_en": "Task",
+			"label_en_plural": "Tasks",
+			"label_de": "Aufgabe",
+			"label_de_plural": "Aufgaben",
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "create",
+					"label_en": "Create task",
+					"label_de": "Aufgabe anlegen",
+					"operationId": "createTasks",
+					"method": "POST",
+					"path": "/tasks",
+					"scope": "data:write",
+					"summary_en": "Create Tasks",
+					"summary_de": "Aufgaben: anlegen",
+					"description_en": "With tags, links and dynamic fields in one transaction. Rights: write on the module and the category (requirements, standards: the parent in the writable subtree). Element quota of the plan: 403 quota_exceeded/elements. Default status: the first of the type.",
+					"description_de": "Mit Schlagworten, Verknüpfungen und dynamischen Feldern in einer Transaktion. Rechte: Schreiben im Modul und in der Kategorie (Anforderungen, Normen: der Elternteil im schreibbaren Teilbaum). Elementkontingent des Abos: 403 quota_exceeded/elements. Vorgabestatus: der erste des Typs.",
+					"params": [
+						{
+							"name": "Idempotency-Key",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[A-Za-z0-9_-]{8,128}$",
+							"description_en": "repeats of the same request within 24 hours create nothing twice",
+							"description_de": "Wiederholungen derselben Anfrage innerhalb von 24 Stunden legen nichts doppelt an",
+							"role": "idempotency_key"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "kind",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"enum": [
+									"task",
+									"measure",
+									"scheduled"
+								],
+								"description_en": "kind, set when creating",
+								"description_de": "Art, beim Anlegen festgelegt"
+							},
+							{
+								"name": "name",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "due_date",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"format": "date",
+								"description_en": "due date; of a scheduled task its start date (default: today)",
+								"description_de": "Fälligkeit; bei einer geplanten Aufgabe das Startdatum (Vorgabe: heute)"
+							},
+							{
+								"name": "repetition",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"enum": [
+									"1w",
+									"2w",
+									"3w",
+									"4w",
+									"1m",
+									"3m",
+									"6m",
+									"1y",
+									"2y",
+									"3y"
+								],
+								"description_en": "repetition of a scheduled task (/meta repetitions)",
+								"description_de": "Wiederholung einer geplanten Aufgabe (/meta repetitions)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "links",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "partner path => ids (readable partners of writable types, /meta links)",
+								"description_de": "Pfad des Partners => IDs (lesbare Partner der schreibbaren Typen, /meta links)"
+							},
+							{
+								"name": "fields",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "dynamic fields: field id => value (all or none)",
+								"description_de": "dynamische Felder: Feld-ID => Wert (alle oder keiner)"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "get",
+					"label_en": "Get task",
+					"label_de": "Aufgabe lesen",
+					"operationId": "getTasksItem",
+					"method": "GET",
+					"path": "/tasks/{id}",
+					"scope": "data:read",
+					"summary_en": "One Tasks",
+					"summary_de": "Aufgaben: ein Element",
+					"description_en": "404 when it does not exist or the key cannot read it. include: links, fields, computed, files.",
+					"description_de": "404, wenn es das Element nicht gibt oder der Schlüssel es nicht lesen darf. include: links, fields, computed, files.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "include",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list: links, fields, computed, files",
+							"description_de": "Kommaliste: links, fields, computed, files"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List tasks",
+					"label_de": "Aufgabe: Liste",
+					"operationId": "listTasks",
+					"method": "GET",
+					"path": "/tasks",
+					"scope": "data:read",
+					"summary_en": "List Tasks",
+					"summary_de": "Aufgaben auflisten",
+					"description_en": "Elements the key can read (role: menu, category or subtree, booking), keyset pages. Without description; detail for that.",
+					"description_de": "Elemente, die der Schlüssel lesen darf (Rolle: Menü, Kategorie bzw. Teilbaum, Buchung), Seiten mit Cursor. Ohne Beschreibung; dafür das Detail.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"id",
+								"-id",
+								"name",
+								"-name",
+								"changed_at",
+								"-changed_at",
+								"created_at",
+								"-created_at",
+								"review_date",
+								"-review_date"
+							],
+							"description_en": "sort, \"-\" descending; review_date without date last",
+							"description_de": "Sortierung, „-“ absteigend; review_date ohne Datum am Ende"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"task",
+								"measure",
+								"scheduled"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the name",
+							"description_de": "Teil des Namens"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed at or after (YYYY-MM-DD or …Z)",
+							"description_de": "geändert ab (YYYY-MM-DD oder …Z)"
+						},
+						{
+							"name": "review_before",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date before",
+							"description_de": "Wiedervorlage vor"
+						},
+						{
+							"name": "review_after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date after",
+							"description_de": "Wiedervorlage nach"
+						},
+						{
+							"name": "status",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "status key or id; only kinds that carry a status",
+							"description_de": "Schlüssel oder ID des Status; nur Arten mit Status",
+							"lookup": "status"
+						},
+						{
+							"name": "open",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"true",
+								"false"
+							],
+							"description_en": "only open ones (true: only kinds that carry a status)",
+							"description_de": "nur offene (true: nur Arten mit Status)"
+						},
+						{
+							"name": "parent_id",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 0,
+							"description_en": "parent element (0 = top level)",
+							"description_de": "übergeordnetes Element (0 = oberste Ebene)"
+						},
+						{
+							"name": "owner",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "owner reference",
+							"description_de": "Referenz des Verantwortlichen",
+							"lookup": "owner"
+						},
+						{
+							"name": "tag",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "free tag",
+							"description_de": "freies Schlagwort",
+							"lookup": "tag"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				},
+				{
+					"key": "update",
+					"label_en": "Update task",
+					"label_de": "Aufgabe ändern",
+					"operationId": "updateTasksItem",
+					"method": "PATCH",
+					"path": "/tasks/{id}",
+					"scope": "data:write",
+					"summary_en": "Change Tasks",
+					"summary_de": "Aufgaben: ändern",
+					"description_en": "Only the fields sent. Category: old and new must be writable. A closed incident or task: 409 closed.",
+					"description_de": "Nur gesendete Felder. Kategorie: alte und neue müssen schreibbar sein. Geschlossener Vorfall bzw. geschlossene Aufgabe: 409 closed.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "name",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "due_date",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"format": "date",
+								"description_en": "due date; of a scheduled task its start date (default: today)",
+								"description_de": "Fälligkeit; bei einer geplanten Aufgabe das Startdatum (Vorgabe: heute)"
+							},
+							{
+								"name": "repetition",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"enum": [
+									"1w",
+									"2w",
+									"3w",
+									"4w",
+									"1m",
+									"3m",
+									"6m",
+									"1y",
+									"2y",
+									"3y"
+								],
+								"description_en": "repetition of a scheduled task (/meta repetitions)",
+								"description_de": "Wiederholung einer geplanten Aufgabe (/meta repetitions)"
+							}
+						],
+						"min_properties": 1
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "set_status",
+					"label_en": "Set status of task",
+					"label_de": "Aufgabe: Status setzen",
+					"operationId": "setTasksStatus",
+					"method": "PUT",
+					"path": "/tasks/{id}/status",
+					"scope": "data:write",
+					"summary_en": "Set the status of Tasks",
+					"summary_de": "Aufgaben: Status setzen",
+					"description_en": "Key or id (/meta). Reopening a closed incident or task needs the delete right (403 forbidden/reopen_needs_delete_right). A standard with a linked requirement in status 40, 41, 42 or 44: 409 conflict/derived_status. Unchanged: 200 without a log entry.",
+					"description_de": "Schlüssel oder ID (/meta). Einen geschlossenen Vorfall bzw. eine geschlossene Aufgabe wieder öffnen braucht das Löschrecht (403 forbidden/reopen_needs_delete_right). Eine Norm mit verknüpfter Anforderung im Status 40, 41, 42 oder 44: 409 conflict/derived_status. Unverändert: 200 ohne Protokolleintrag.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "status",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"lookup": "status"
+							}
+						]
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "add_comment",
+					"label_en": "Comment on task",
+					"label_de": "Aufgabe kommentieren",
+					"operationId": "addTasksComment",
+					"method": "POST",
+					"path": "/tasks/{id}/comments",
+					"scope": "data:write",
+					"summary_en": "Comment on Tasks",
+					"summary_de": "Aufgaben: kommentieren",
+					"description_en": "Comments cannot be changed or deleted; they go with the element.",
+					"description_de": "Kommentare lassen sich weder ändern noch löschen; sie gehen mit dem Element.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "Idempotency-Key",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[A-Za-z0-9_-]{8,128}$",
+							"description_en": "repeats of the same request within 24 hours create nothing twice",
+							"description_de": "Wiederholungen derselben Anfrage innerhalb von 24 Stunden legen nichts doppelt an",
+							"role": "idempotency_key"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "text_html",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"html": true,
+								"description_en": "HTML, cleaned, at most 60 000 bytes",
+								"description_de": "HTML, bereinigt, höchstens 60 000 Byte"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object",
+						"items_field": "data"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"status": [
+					{
+						"operationId": "getTasksMeta",
+						"method": "GET",
+						"path": "/tasks/meta",
+						"query": {},
+						"items": "data.statuses",
+						"value": "key",
+						"label": "label",
+						"paginated": false,
+						"label_en": "Value lists of tasks",
+						"label_de": "Aufgabe: Wertelisten"
+					}
+				],
+				"category": [
+					{
+						"operationId": "getTasksMeta",
+						"method": "GET",
+						"path": "/tasks/meta",
+						"query": {},
+						"items": "data.categories",
+						"value": "id",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Value lists of tasks",
+						"label_de": "Aufgabe: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "asset",
+			"label_en": "Asset",
+			"label_en_plural": "Assets",
+			"label_de": "Asset",
+			"label_de_plural": "Assets",
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "create",
+					"label_en": "Create asset",
+					"label_de": "Asset anlegen",
+					"operationId": "createAssets",
+					"method": "POST",
+					"path": "/assets",
+					"scope": "data:write",
+					"summary_en": "Create Assets",
+					"summary_de": "Assets: anlegen",
+					"description_en": "With tags, links and dynamic fields in one transaction. Rights: write on the module and the category (requirements, standards: the parent in the writable subtree). Element quota of the plan: 403 quota_exceeded/elements. Default status: the first of the type.",
+					"description_de": "Mit Schlagworten, Verknüpfungen und dynamischen Feldern in einer Transaktion. Rechte: Schreiben im Modul und in der Kategorie (Anforderungen, Normen: der Elternteil im schreibbaren Teilbaum). Elementkontingent des Abos: 403 quota_exceeded/elements. Vorgabestatus: der erste des Typs.",
+					"params": [
+						{
+							"name": "Idempotency-Key",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[A-Za-z0-9_-]{8,128}$",
+							"description_en": "repeats of the same request within 24 hours create nothing twice",
+							"description_de": "Wiederholungen derselben Anfrage innerhalb von 24 Stunden legen nichts doppelt an",
+							"role": "idempotency_key"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "kind",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"enum": [
+									"element"
+								],
+								"description_en": "kind, set when creating",
+								"description_de": "Art, beim Anlegen festgelegt"
+							},
+							{
+								"name": "name",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "value",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"minimum": 0,
+								"description_en": "value of the asset",
+								"description_de": "Wert des Assets"
+							},
+							{
+								"name": "risk_owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "risk owner as emp_N or role_N",
+								"description_de": "Risikoverantwortliche als emp_N oder role_N"
+							},
+							{
+								"name": "protection",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "protection need C/I/A (levels: /meta levels.protection)",
+								"description_de": "Schutzbedarf C/I/A (Stufen: /meta levels.protection)"
+							},
+							{
+								"name": "processes_personal_data",
+								"required": false,
+								"type": "boolean",
+								"nullable": true,
+								"description_en": "personal data are processed (false stays false)",
+								"description_de": "Verarbeitung personenbezogener Daten (false bleibt false)"
+							},
+							{
+								"name": "processing_purpose",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "purpose of the processing",
+								"description_de": "Zweck der Verarbeitung"
+							},
+							{
+								"name": "deletion_rule",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"maxLength": 255,
+								"description_en": "deletion period (special case)",
+								"description_de": "Löschfrist (Besonderheit)"
+							},
+							{
+								"name": "third_country_note",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "comment on third countries",
+								"description_de": "Kommentar Drittland"
+							},
+							{
+								"name": "dpia_note",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "comment on the DPIA",
+								"description_de": "DSFA-Anmerkung"
+							},
+							{
+								"name": "dp_risk_reason",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "reason for the data protection risk",
+								"description_de": "Begründung des Datenschutzrisikos"
+							},
+							{
+								"name": "dpia_done",
+								"required": false,
+								"type": "boolean",
+								"nullable": true,
+								"description_en": "DPIA carried out",
+								"description_de": "DSFA durchgeführt"
+							},
+							{
+								"name": "dp_risk",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "risk of the processing (levels: /meta levels.dp_risk)",
+								"description_de": "Risiko der Verarbeitung (Stufen: /meta levels.dp_risk)"
+							},
+							{
+								"name": "data_subjects",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "categories of data subjects",
+								"description_de": "Kategorien betroffener Personen"
+							},
+							{
+								"name": "processing_categories",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "categories of personal data",
+								"description_de": "Kategorien personenbezogener Daten"
+							},
+							{
+								"name": "processing_types",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "kinds of processing",
+								"description_de": "Art der Verarbeitung"
+							},
+							{
+								"name": "recipients",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "internal recipients",
+								"description_de": "interne Empfänger"
+							},
+							{
+								"name": "retention",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "retention classes",
+								"description_de": "Löschklassen"
+							},
+							{
+								"name": "third_countries",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "third countries",
+								"description_de": "Drittländer"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "icon",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^[A-Za-z0-9 _-]{0,100}$",
+								"description_en": "icon (CSS class)",
+								"description_de": "Symbol (CSS-Klasse)"
+							},
+							{
+								"name": "category",
+								"required": true,
+								"type": "integer",
+								"nullable": false,
+								"description_en": "id of a category of the type (/meta)",
+								"description_de": "ID einer Kategorie des Typs (/meta)",
+								"lookup": "category"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "links",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "partner path => ids (readable partners of writable types, /meta links)",
+								"description_de": "Pfad des Partners => IDs (lesbare Partner der schreibbaren Typen, /meta links)"
+							},
+							{
+								"name": "fields",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "dynamic fields: field id => value (all or none)",
+								"description_de": "dynamische Felder: Feld-ID => Wert (alle oder keiner)"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "get",
+					"label_en": "Get asset",
+					"label_de": "Asset lesen",
+					"operationId": "getAssetsItem",
+					"method": "GET",
+					"path": "/assets/{id}",
+					"scope": "data:read",
+					"summary_en": "One Assets",
+					"summary_de": "Assets: ein Element",
+					"description_en": "404 when it does not exist or the key cannot read it. include: links, fields, computed, files.",
+					"description_de": "404, wenn es das Element nicht gibt oder der Schlüssel es nicht lesen darf. include: links, fields, computed, files.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "include",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list: links, fields, computed, files",
+							"description_de": "Kommaliste: links, fields, computed, files"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List assets",
+					"label_de": "Asset: Liste",
+					"operationId": "listAssets",
+					"method": "GET",
+					"path": "/assets",
+					"scope": "data:read",
+					"summary_en": "List Assets",
+					"summary_de": "Assets auflisten",
+					"description_en": "Elements the key can read (role: menu, category or subtree, booking), keyset pages. Without description; detail for that.",
+					"description_de": "Elemente, die der Schlüssel lesen darf (Rolle: Menü, Kategorie bzw. Teilbaum, Buchung), Seiten mit Cursor. Ohne Beschreibung; dafür das Detail.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"id",
+								"-id",
+								"name",
+								"-name",
+								"changed_at",
+								"-changed_at",
+								"created_at",
+								"-created_at",
+								"review_date",
+								"-review_date"
+							],
+							"description_en": "sort, \"-\" descending; review_date without date last",
+							"description_de": "Sortierung, „-“ absteigend; review_date ohne Datum am Ende"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"element"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the name",
+							"description_de": "Teil des Namens"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed at or after (YYYY-MM-DD or …Z)",
+							"description_de": "geändert ab (YYYY-MM-DD oder …Z)"
+						},
+						{
+							"name": "review_before",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date before",
+							"description_de": "Wiedervorlage vor"
+						},
+						{
+							"name": "review_after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date after",
+							"description_de": "Wiedervorlage nach"
+						},
+						{
+							"name": "status",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "status key or id; only kinds that carry a status",
+							"description_de": "Schlüssel oder ID des Status; nur Arten mit Status",
+							"lookup": "status"
+						},
+						{
+							"name": "category",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"description_en": "category id",
+							"description_de": "Kategorie-ID",
+							"lookup": "category"
+						},
+						{
+							"name": "parent_id",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 0,
+							"description_en": "parent element (0 = top level)",
+							"description_de": "übergeordnetes Element (0 = oberste Ebene)"
+						},
+						{
+							"name": "owner",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "owner reference",
+							"description_de": "Referenz des Verantwortlichen",
+							"lookup": "owner"
+						},
+						{
+							"name": "tag",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "free tag",
+							"description_de": "freies Schlagwort",
+							"lookup": "tag"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				},
+				{
+					"key": "update",
+					"label_en": "Update asset",
+					"label_de": "Asset ändern",
+					"operationId": "updateAssetsItem",
+					"method": "PATCH",
+					"path": "/assets/{id}",
+					"scope": "data:write",
+					"summary_en": "Change Assets",
+					"summary_de": "Assets: ändern",
+					"description_en": "Only the fields sent. Category: old and new must be writable. A closed incident or task: 409 closed.",
+					"description_de": "Nur gesendete Felder. Kategorie: alte und neue müssen schreibbar sein. Geschlossener Vorfall bzw. geschlossene Aufgabe: 409 closed.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "name",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "icon",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^[A-Za-z0-9 _-]{0,100}$",
+								"description_en": "icon (CSS class)",
+								"description_de": "Symbol (CSS-Klasse)"
+							},
+							{
+								"name": "category",
+								"required": false,
+								"type": "integer",
+								"nullable": false,
+								"description_en": "id of a category of the type (/meta)",
+								"description_de": "ID einer Kategorie des Typs (/meta)",
+								"lookup": "category"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "value",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"minimum": 0,
+								"description_en": "value of the asset",
+								"description_de": "Wert des Assets"
+							},
+							{
+								"name": "risk_owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "risk owner as emp_N or role_N",
+								"description_de": "Risikoverantwortliche als emp_N oder role_N"
+							},
+							{
+								"name": "protection",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "protection need C/I/A (levels: /meta levels.protection)",
+								"description_de": "Schutzbedarf C/I/A (Stufen: /meta levels.protection)"
+							},
+							{
+								"name": "processes_personal_data",
+								"required": false,
+								"type": "boolean",
+								"nullable": true,
+								"description_en": "personal data are processed (false stays false)",
+								"description_de": "Verarbeitung personenbezogener Daten (false bleibt false)"
+							},
+							{
+								"name": "processing_purpose",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "purpose of the processing",
+								"description_de": "Zweck der Verarbeitung"
+							},
+							{
+								"name": "deletion_rule",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"maxLength": 255,
+								"description_en": "deletion period (special case)",
+								"description_de": "Löschfrist (Besonderheit)"
+							},
+							{
+								"name": "third_country_note",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "comment on third countries",
+								"description_de": "Kommentar Drittland"
+							},
+							{
+								"name": "dpia_note",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "comment on the DPIA",
+								"description_de": "DSFA-Anmerkung"
+							},
+							{
+								"name": "dp_risk_reason",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "reason for the data protection risk",
+								"description_de": "Begründung des Datenschutzrisikos"
+							},
+							{
+								"name": "dpia_done",
+								"required": false,
+								"type": "boolean",
+								"nullable": true,
+								"description_en": "DPIA carried out",
+								"description_de": "DSFA durchgeführt"
+							},
+							{
+								"name": "dp_risk",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "risk of the processing (levels: /meta levels.dp_risk)",
+								"description_de": "Risiko der Verarbeitung (Stufen: /meta levels.dp_risk)"
+							},
+							{
+								"name": "data_subjects",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "categories of data subjects",
+								"description_de": "Kategorien betroffener Personen"
+							},
+							{
+								"name": "processing_categories",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "categories of personal data",
+								"description_de": "Kategorien personenbezogener Daten"
+							},
+							{
+								"name": "processing_types",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "kinds of processing",
+								"description_de": "Art der Verarbeitung"
+							},
+							{
+								"name": "recipients",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "internal recipients",
+								"description_de": "interne Empfänger"
+							},
+							{
+								"name": "retention",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "retention classes",
+								"description_de": "Löschklassen"
+							},
+							{
+								"name": "third_countries",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "third countries",
+								"description_de": "Drittländer"
+							}
+						],
+						"min_properties": 1
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"status": [
+					{
+						"operationId": "getAssetsMeta",
+						"method": "GET",
+						"path": "/assets/meta",
+						"query": {},
+						"items": "data.statuses",
+						"value": "key",
+						"label": "label",
+						"paginated": false,
+						"label_en": "Value lists of assets",
+						"label_de": "Asset: Wertelisten"
+					}
+				],
+				"category": [
+					{
+						"operationId": "getAssetsMeta",
+						"method": "GET",
+						"path": "/assets/meta",
+						"query": {},
+						"items": "data.categories",
+						"value": "id",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Value lists of assets",
+						"label_de": "Asset: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "scenario",
+			"label_en": "Risk Scenario",
+			"label_en_plural": "Risk Scenarios",
+			"label_de": "Risiko",
+			"label_de_plural": "Risiken",
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "get",
+					"label_en": "Get risk scenario",
+					"label_de": "Risikoszenario lesen",
+					"operationId": "getScenariosItem",
+					"method": "GET",
+					"path": "/scenarios/{id}",
+					"scope": "data:read",
+					"summary_en": "One Scenarios",
+					"summary_de": "Szenarien: ein Element",
+					"description_en": "404 when it does not exist or the key cannot read it. include: links, fields, computed, files.",
+					"description_de": "404, wenn es das Element nicht gibt oder der Schlüssel es nicht lesen darf. include: links, fields, computed, files.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "include",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list: links, fields, computed, files",
+							"description_de": "Kommaliste: links, fields, computed, files"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List risk scenarios",
+					"label_de": "Risikoszenario: Liste",
+					"operationId": "listScenarios",
+					"method": "GET",
+					"path": "/scenarios",
+					"scope": "data:read",
+					"summary_en": "List Scenarios",
+					"summary_de": "Szenarien auflisten",
+					"description_en": "Elements the key can read (role: menu, category or subtree, booking), keyset pages. Without description; detail for that.",
+					"description_de": "Elemente, die der Schlüssel lesen darf (Rolle: Menü, Kategorie bzw. Teilbaum, Buchung), Seiten mit Cursor. Ohne Beschreibung; dafür das Detail.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"id",
+								"-id",
+								"name",
+								"-name",
+								"changed_at",
+								"-changed_at",
+								"created_at",
+								"-created_at",
+								"review_date",
+								"-review_date"
+							],
+							"description_en": "sort, \"-\" descending; review_date without date last",
+							"description_de": "Sortierung, „-“ absteigend; review_date ohne Datum am Ende"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"element"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the name",
+							"description_de": "Teil des Namens"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed at or after (YYYY-MM-DD or …Z)",
+							"description_de": "geändert ab (YYYY-MM-DD oder …Z)"
+						},
+						{
+							"name": "review_before",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date before",
+							"description_de": "Wiedervorlage vor"
+						},
+						{
+							"name": "review_after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date after",
+							"description_de": "Wiedervorlage nach"
+						},
+						{
+							"name": "category",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"description_en": "category id",
+							"description_de": "Kategorie-ID",
+							"lookup": "category"
+						},
+						{
+							"name": "owner",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "owner reference",
+							"description_de": "Referenz des Verantwortlichen",
+							"lookup": "owner"
+						},
+						{
+							"name": "tag",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "free tag",
+							"description_de": "freies Schlagwort",
+							"lookup": "tag"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				},
+				{
+					"key": "update",
+					"label_en": "Update risk scenario",
+					"label_de": "Risikoszenario ändern",
+					"operationId": "updateScenariosItem",
+					"method": "PATCH",
+					"path": "/scenarios/{id}",
+					"scope": "data:write",
+					"summary_en": "Change Scenarios",
+					"summary_de": "Szenarien: ändern",
+					"description_en": "Only the fields sent. Category: old and new must be writable. A closed incident or task: 409 closed.",
+					"description_de": "Nur gesendete Felder. Kategorie: alte und neue müssen schreibbar sein. Geschlossener Vorfall bzw. geschlossene Aufgabe: 409 closed.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "name",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "icon",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^[A-Za-z0-9 _-]{0,100}$",
+								"description_en": "icon (CSS class)",
+								"description_de": "Symbol (CSS-Klasse)"
+							},
+							{
+								"name": "category",
+								"required": false,
+								"type": "integer",
+								"nullable": false,
+								"description_en": "id of a category of the type (/meta)",
+								"description_de": "ID einer Kategorie des Typs (/meta)",
+								"lookup": "category"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "impact",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "impact C/I/A (levels: /meta levels.impact)",
+								"description_de": "Auswirkung C/I/A (Stufen: /meta levels.impact)"
+							},
+							{
+								"name": "likelihood",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "likelihood of occurrence, required (levels: /meta levels.likelihood)",
+								"description_de": "Eintrittswahrscheinlichkeit, Pflicht (Stufen: /meta levels.likelihood)"
+							}
+						],
+						"min_properties": 1
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"category": [
+					{
+						"operationId": "getScenariosMeta",
+						"method": "GET",
+						"path": "/scenarios/meta",
+						"query": {},
+						"items": "data.categories",
+						"value": "id",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Value lists of risk scenarios",
+						"label_de": "Risikoszenario: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "process",
+			"label_en": "Process",
+			"label_en_plural": "Processes",
+			"label_de": "Prozess",
+			"label_de_plural": "Prozesse",
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "get",
+					"label_en": "Get process",
+					"label_de": "Prozess lesen",
+					"operationId": "getProcessesItem",
+					"method": "GET",
+					"path": "/processes/{id}",
+					"scope": "data:read",
+					"summary_en": "One Processes",
+					"summary_de": "Prozesse: ein Element",
+					"description_en": "404 when it does not exist or the key cannot read it. include: links, fields, computed, files.",
+					"description_de": "404, wenn es das Element nicht gibt oder der Schlüssel es nicht lesen darf. include: links, fields, computed, files.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "include",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list: links, fields, computed, files",
+							"description_de": "Kommaliste: links, fields, computed, files"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List processes",
+					"label_de": "Prozess: Liste",
+					"operationId": "listProcesses",
+					"method": "GET",
+					"path": "/processes",
+					"scope": "data:read",
+					"summary_en": "List Processes",
+					"summary_de": "Prozesse auflisten",
+					"description_en": "Elements the key can read (role: menu, category or subtree, booking), keyset pages. Without description; detail for that.",
+					"description_de": "Elemente, die der Schlüssel lesen darf (Rolle: Menü, Kategorie bzw. Teilbaum, Buchung), Seiten mit Cursor. Ohne Beschreibung; dafür das Detail.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"id",
+								"-id",
+								"name",
+								"-name",
+								"changed_at",
+								"-changed_at",
+								"created_at",
+								"-created_at",
+								"review_date",
+								"-review_date"
+							],
+							"description_en": "sort, \"-\" descending; review_date without date last",
+							"description_de": "Sortierung, „-“ absteigend; review_date ohne Datum am Ende"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"element"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the name",
+							"description_de": "Teil des Namens"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed at or after (YYYY-MM-DD or …Z)",
+							"description_de": "geändert ab (YYYY-MM-DD oder …Z)"
+						},
+						{
+							"name": "review_before",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date before",
+							"description_de": "Wiedervorlage vor"
+						},
+						{
+							"name": "review_after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date after",
+							"description_de": "Wiedervorlage nach"
+						},
+						{
+							"name": "status",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "status key or id; only kinds that carry a status",
+							"description_de": "Schlüssel oder ID des Status; nur Arten mit Status",
+							"lookup": "status"
+						},
+						{
+							"name": "parent_id",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 0,
+							"description_en": "parent element (0 = top level)",
+							"description_de": "übergeordnetes Element (0 = oberste Ebene)"
+						},
+						{
+							"name": "owner",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "owner reference",
+							"description_de": "Referenz des Verantwortlichen",
+							"lookup": "owner"
+						},
+						{
+							"name": "tag",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "free tag",
+							"description_de": "freies Schlagwort",
+							"lookup": "tag"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				},
+				{
+					"key": "update",
+					"label_en": "Update process",
+					"label_de": "Prozess ändern",
+					"operationId": "updateProcessesItem",
+					"method": "PATCH",
+					"path": "/processes/{id}",
+					"scope": "data:write",
+					"summary_en": "Change Processes",
+					"summary_de": "Prozesse: ändern",
+					"description_en": "Only the fields sent. Category: old and new must be writable. A closed incident or task: 409 closed.",
+					"description_de": "Nur gesendete Felder. Kategorie: alte und neue müssen schreibbar sein. Geschlossener Vorfall bzw. geschlossene Aufgabe: 409 closed.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "If-Match",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "ETag of the representation that was read; another one answers 412",
+							"description_de": "ETag der gelesenen Fassung; eine andere ergibt 412",
+							"role": "if_match"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "name",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"minLength": 1,
+								"maxLength": 255,
+								"description_en": "name (the tenant's value; the template's is in master)",
+								"description_de": "Name (Wert des Mandanten; der der Vorlage steht in master)"
+							},
+							{
+								"name": "description_html",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"html": true,
+								"description_en": "HTML, cleaned on saving (at most 65 535 bytes)",
+								"description_de": "HTML, beim Speichern bereinigt (höchstens 65 535 Byte)"
+							},
+							{
+								"name": "icon",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^[A-Za-z0-9 _-]{0,100}$",
+								"description_en": "icon (CSS class)",
+								"description_de": "Symbol (CSS-Klasse)"
+							},
+							{
+								"name": "risk_relevant",
+								"required": false,
+								"type": "boolean",
+								"nullable": false,
+								"description_en": "counts in the risk calculation",
+								"description_de": "geht in die Risikoberechnung ein"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"alternatives": [
+									"string",
+									"integer"
+								],
+								"description_en": "status key or id (/meta); at its own routes a closed incident or task changes only through /status",
+								"description_de": "Schlüssel oder ID des Status (/meta); an seinen eigenen Routen ändert sich ein geschlossener Vorfall oder eine geschlossene Aufgabe nur über /status",
+								"lookup": "status"
+							},
+							{
+								"name": "owner",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"pattern": "^(emp|role)_[1-9][0-9]*$",
+								"description_en": "owner as reference emp_N or role_N",
+								"description_de": "Verantwortlich als Referenz emp_N oder role_N",
+								"lookup": "owner"
+							},
+							{
+								"name": "parent_id",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "parent element",
+								"description_de": "übergeordnetes Element"
+							},
+							{
+								"name": "tags",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "free tags",
+								"description_de": "freie Schlagworte",
+								"lookup": "tag"
+							},
+							{
+								"name": "process_kind",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"enum": [
+									"none",
+									"management",
+									"core",
+									"support",
+									"subprocess"
+								],
+								"description_en": "process kind; subprocess only with parent_id",
+								"description_de": "Prozessart; subprocess nur mit parent_id"
+							},
+							{
+								"name": "order",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"minimum": 0,
+								"description_en": "position in the process map (PUT /processes/order renumbers)",
+								"description_de": "Position in der Prozesslandkarte (PUT /processes/order nummeriert neu)"
+							},
+							{
+								"name": "protection",
+								"required": false,
+								"type": "object",
+								"nullable": false,
+								"description_en": "protection need C/I/A (levels: /meta levels.protection)",
+								"description_de": "Schutzbedarf C/I/A (Stufen: /meta levels.protection)"
+							},
+							{
+								"name": "processes_personal_data",
+								"required": false,
+								"type": "boolean",
+								"nullable": true,
+								"description_en": "personal data are processed (false stays false)",
+								"description_de": "Verarbeitung personenbezogener Daten (false bleibt false)"
+							},
+							{
+								"name": "processing_purpose",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "purpose of the processing",
+								"description_de": "Zweck der Verarbeitung"
+							},
+							{
+								"name": "deletion_rule",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"maxLength": 255,
+								"description_en": "deletion period (special case)",
+								"description_de": "Löschfrist (Besonderheit)"
+							},
+							{
+								"name": "third_country_note",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "comment on third countries",
+								"description_de": "Kommentar Drittland"
+							},
+							{
+								"name": "dpia_note",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "comment on the DPIA",
+								"description_de": "DSFA-Anmerkung"
+							},
+							{
+								"name": "dp_risk_reason",
+								"required": false,
+								"type": "string",
+								"nullable": true,
+								"description_en": "reason for the data protection risk",
+								"description_de": "Begründung des Datenschutzrisikos"
+							},
+							{
+								"name": "dpia_done",
+								"required": false,
+								"type": "boolean",
+								"nullable": true,
+								"description_en": "DPIA carried out",
+								"description_de": "DSFA durchgeführt"
+							},
+							{
+								"name": "dp_risk",
+								"required": false,
+								"type": "integer",
+								"nullable": true,
+								"description_en": "risk of the processing (levels: /meta levels.dp_risk)",
+								"description_de": "Risiko der Verarbeitung (Stufen: /meta levels.dp_risk)"
+							},
+							{
+								"name": "data_subjects",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "categories of data subjects",
+								"description_de": "Kategorien betroffener Personen"
+							},
+							{
+								"name": "processing_categories",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "categories of personal data",
+								"description_de": "Kategorien personenbezogener Daten"
+							},
+							{
+								"name": "processing_types",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "kinds of processing",
+								"description_de": "Art der Verarbeitung"
+							},
+							{
+								"name": "recipients",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "internal recipients",
+								"description_de": "interne Empfänger"
+							},
+							{
+								"name": "retention",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "retention classes",
+								"description_de": "Löschklassen"
+							},
+							{
+								"name": "third_countries",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 100,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "third countries",
+								"description_de": "Drittländer"
+							}
+						],
+						"min_properties": 1
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"status": [
+					{
+						"operationId": "getProcessesMeta",
+						"method": "GET",
+						"path": "/processes/meta",
+						"query": {},
+						"items": "data.statuses",
+						"value": "key",
+						"label": "label",
+						"paginated": false,
+						"label_en": "Value lists of processes",
+						"label_de": "Prozess: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "document",
+			"label_en": "Document",
+			"label_en_plural": "Documents",
+			"label_de": "Dokument",
+			"label_de_plural": "Dokumente",
+			"id": {
+				"name": "docId",
+				"type": "string",
+				"pattern": "^[0-9a-fA-F-]{36}$"
+			},
+			"actions": [
+				{
+					"key": "get",
+					"label_en": "Get document",
+					"label_de": "Dokument lesen",
+					"operationId": "getDocument",
+					"method": "GET",
+					"path": "/documents/{docId}",
+					"scope": "data:read",
+					"summary_en": "A document",
+					"summary_de": "Ein Dokument",
+					"description_en": "Metadata of the newest version: path, keywords, persons as references, review cycle, approval state, has_public_link (never the link). 404 when missing, in the trash or not readable.",
+					"description_de": "Metadaten der neuesten Version: Pfad, Schlagworte, Personen als Referenzen, Prüfzyklus, Freigabestand, has_public_link (nie der Link). 404, wenn es fehlt, im Papierkorb liegt oder nicht lesbar ist.",
+					"params": [
+						{
+							"name": "docId",
+							"in": "path",
+							"required": true,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[0-9a-fA-F-]{36}$",
+							"description_en": "document id (UUID)",
+							"description_de": "Dokument-ID (UUID)"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List documents",
+					"label_de": "Dokumente: Liste",
+					"operationId": "listDocuments",
+					"method": "GET",
+					"path": "/documents",
+					"scope": "data:read",
+					"summary_en": "List documents",
+					"summary_de": "Dokumente auflisten",
+					"description_en": "The newest version of each document the key may read: category of that version, folders always, nothing in the trash. Filters combine.",
+					"description_de": "Je Dokument die neueste Version, die der Schlüssel lesen darf: Kategorie dieser Version, Ordner immer, nichts aus dem Papierkorb. Filter lassen sich kombinieren.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"title",
+								"-title",
+								"changed_at",
+								"-changed_at"
+							],
+							"default": "title",
+							"description_en": "order",
+							"description_de": "Sortierung"
+						},
+						{
+							"name": "folder_id",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "documents of this folder; \"root\" for the root",
+							"description_de": "Dokumente dieses Ordners; „root“ für die Wurzel"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the title",
+							"description_de": "Teil des Titels"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"file",
+								"html",
+								"diagram",
+								"folder"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "status",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"uploaded",
+								"inProgress",
+								"inReview",
+								"waitingForApproval",
+								"approved",
+								"rejected",
+								"draft"
+							],
+							"description_en": "state",
+							"description_de": "Status",
+							"lookup": "status"
+						},
+						{
+							"name": "category",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"description_en": "category id",
+							"description_de": "Kategorie-ID",
+							"lookup": "category"
+						},
+						{
+							"name": "review_due",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"overdue",
+								"soon"
+							],
+							"description_en": "review overdue or due soon",
+							"description_de": "Prüfung überfällig oder bald fällig"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed since (YYYY-MM-DD or date-time with zone)",
+							"description_de": "geändert seit (JJJJ-MM-TT oder Zeitpunkt mit Zone)"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				},
+				{
+					"key": "upload",
+					"label_en": "Upload document",
+					"label_de": "Dokument hochladen",
+					"operationId": "uploadDocument",
+					"method": "POST",
+					"path": "/documents/files",
+					"scope": "data:write",
+					"summary_en": "Upload a file",
+					"summary_de": "Datei hochladen",
+					"description_en": "Always a new document (version 1). multipart/form-data with the part \"file\", or application/octet-stream with ?name=&folder_id=&category=&confidentiality=. At most 64 MB; only types recognised in the bytes with a matching extension (Office, PDF, images without SVG, text without HTML); no macro formats, also not renamed. Without a storage quota in the subscription (missing or 0) 403 quota_exceeded, reason storage.",
+					"description_de": "Immer ein neues Dokument (Version 1). multipart/form-data mit dem Teil „file“ oder application/octet-stream mit ?name=&folder_id=&category=&confidentiality=. Höchstens 64 MB; nur Typen, die im Inhalt erkannt werden, mit passender Endung (Office, PDF, Bilder ohne SVG, Text ohne HTML); keine Makro-Formate, auch nicht umbenannt. Ohne Speicherquote im Abonnement (fehlt oder 0) 403 quota_exceeded, reason storage.",
+					"params": [
+						{
+							"name": "Idempotency-Key",
+							"in": "header",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"pattern": "^[A-Za-z0-9_-]{8,128}$",
+							"description_en": "repeats of the same request within 24 hours create nothing twice",
+							"description_de": "Wiederholungen derselben Anfrage innerhalb von 24 Stunden legen nichts doppelt an",
+							"role": "idempotency_key"
+						},
+						{
+							"name": "name",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "file name (application/octet-stream)",
+							"description_de": "Dateiname (application/octet-stream)"
+						},
+						{
+							"name": "folder_id",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "target folder (application/octet-stream)",
+							"description_de": "Zielordner (application/octet-stream)"
+						},
+						{
+							"name": "category",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"description_en": "category (application/octet-stream)",
+							"description_de": "Kategorie (application/octet-stream)",
+							"lookup": "category"
+						},
+						{
+							"name": "confidentiality",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"description_en": "confidentiality (application/octet-stream)",
+							"description_de": "Vertraulichkeit (application/octet-stream)"
+						}
+					],
+					"body": {
+						"content_type": "multipart/form-data",
+						"alternatives": [
+							"application/octet-stream"
+						],
+						"required": true,
+						"fields": [
+							{
+								"name": "file",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"format": "binary",
+								"description_en": "the file (at most 64 MB)",
+								"description_de": "die Datei (höchstens 64 MB)"
+							},
+							{
+								"name": "name",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"description_en": "title instead of the file name",
+								"description_de": "Titel statt des Dateinamens"
+							},
+							{
+								"name": "folder_id",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"description_en": "folder, null or \"root\" for the root",
+								"description_de": "Ordner, null oder „root“ für die Wurzel"
+							},
+							{
+								"name": "category",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"description_en": "category",
+								"description_de": "Kategorie",
+								"lookup": "category"
+							},
+							{
+								"name": "confidentiality",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"description_en": "confidentiality level",
+								"description_de": "Vertraulichkeit"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object",
+						"location_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"category": [
+					{
+						"operationId": "getDocumentMeta",
+						"method": "GET",
+						"path": "/documents/meta",
+						"query": {},
+						"items": "data.categories",
+						"value": "id",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Value lists of documents",
+						"label_de": "Dokumente: Wertelisten"
+					}
+				],
+				"status": [
+					{
+						"operationId": "getDocumentMeta",
+						"method": "GET",
+						"path": "/documents/meta",
+						"query": {},
+						"items": "data.statuses",
+						"value": "key",
+						"label": "label",
+						"paginated": false,
+						"label_en": "Value lists of documents",
+						"label_de": "Dokumente: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "control",
+			"label_en": "Control",
+			"label_en_plural": "Controls",
+			"label_de": "Maßnahme",
+			"label_de_plural": "Maßnahmen",
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "get",
+					"label_en": "Get control",
+					"label_de": "Maßnahme lesen",
+					"operationId": "getControlsItem",
+					"method": "GET",
+					"path": "/controls/{id}",
+					"scope": "data:read",
+					"summary_en": "One Controls",
+					"summary_de": "Maßnahmen: ein Element",
+					"description_en": "404 when it does not exist or the key cannot read it. include: links, fields, computed, files.",
+					"description_de": "404, wenn es das Element nicht gibt oder der Schlüssel es nicht lesen darf. include: links, fields, computed, files.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "element id",
+							"description_de": "Element-ID"
+						},
+						{
+							"name": "include",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list: links, fields, computed, files",
+							"description_de": "Kommaliste: links, fields, computed, files"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"etag_header": true,
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List controls",
+					"label_de": "Maßnahme: Liste",
+					"operationId": "listControls",
+					"method": "GET",
+					"path": "/controls",
+					"scope": "data:read",
+					"summary_en": "List Controls",
+					"summary_de": "Maßnahmen auflisten",
+					"description_en": "Elements the key can read (role: menu, category or subtree, booking), keyset pages. Without description; detail for that.",
+					"description_de": "Elemente, die der Schlüssel lesen darf (Rolle: Menü, Kategorie bzw. Teilbaum, Buchung), Seiten mit Cursor. Ohne Beschreibung; dafür das Detail.",
+					"params": [
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 500,
+							"default": 100,
+							"description_en": "rows per page",
+							"description_de": "Zeilen je Seite",
+							"role": "limit"
+						},
+						{
+							"name": "cursor",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "next_cursor of the previous page",
+							"description_de": "next_cursor der vorigen Seite",
+							"role": "cursor"
+						},
+						{
+							"name": "sort",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"id",
+								"-id",
+								"name",
+								"-name",
+								"changed_at",
+								"-changed_at",
+								"created_at",
+								"-created_at",
+								"review_date",
+								"-review_date"
+							],
+							"description_en": "sort, \"-\" descending; review_date without date last",
+							"description_de": "Sortierung, „-“ absteigend; review_date ohne Datum am Ende"
+						},
+						{
+							"name": "kind",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"enum": [
+								"element"
+							],
+							"description_en": "kind",
+							"description_de": "Art"
+						},
+						{
+							"name": "q",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"minLength": 2,
+							"maxLength": 100,
+							"description_en": "part of the name",
+							"description_de": "Teil des Namens"
+						},
+						{
+							"name": "changed_since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "changed at or after (YYYY-MM-DD or …Z)",
+							"description_de": "geändert ab (YYYY-MM-DD oder …Z)"
+						},
+						{
+							"name": "review_before",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date before",
+							"description_de": "Wiedervorlage vor"
+						},
+						{
+							"name": "review_after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date",
+							"description_en": "review date after",
+							"description_de": "Wiedervorlage nach"
+						},
+						{
+							"name": "status",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "status key or id; only kinds that carry a status",
+							"description_de": "Schlüssel oder ID des Status; nur Arten mit Status",
+							"lookup": "status"
+						},
+						{
+							"name": "category",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"description_en": "category id",
+							"description_de": "Kategorie-ID",
+							"lookup": "category"
+						},
+						{
+							"name": "owner",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "owner reference",
+							"description_de": "Referenz des Verantwortlichen",
+							"lookup": "owner"
+						},
+						{
+							"name": "tag",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "free tag",
+							"description_de": "freies Schlagwort",
+							"lookup": "tag"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": true
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"status": [
+					{
+						"operationId": "getControlsMeta",
+						"method": "GET",
+						"path": "/controls/meta",
+						"query": {},
+						"items": "data.statuses",
+						"value": "key",
+						"label": "label",
+						"paginated": false,
+						"label_en": "Value lists of controls",
+						"label_de": "Maßnahme: Wertelisten"
+					}
+				],
+				"category": [
+					{
+						"operationId": "getControlsMeta",
+						"method": "GET",
+						"path": "/controls/meta",
+						"query": {},
+						"items": "data.categories",
+						"value": "id",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Value lists of controls",
+						"label_de": "Maßnahme: Wertelisten"
+					}
+				]
+			}
+		},
+		{
+			"key": "event",
+			"label_en": "Event",
+			"label_en_plural": "Events (polling Trigger)",
+			"label_de": "Event",
+			"label_de_plural": "Event",
+			"infrastructure": true,
+			"id": null,
+			"actions": [
+				{
+					"key": "list",
+					"label_en": "List events (polling trigger)",
+					"label_de": "Ereignisse abrufen (Abfrage-Auslöser)",
+					"operationId": "listEvents",
+					"method": "GET",
+					"path": "/events",
+					"scope": "data:read",
+					"summary_en": "Events (change stream)",
+					"summary_de": "Ereignisse (Änderungsstrom)",
+					"description_en": "Events after a cursor, oldest first: changes from the change log (created, updated, status_changed, deleted, commented, approved, rejected) and business events (deadlines, due dates, SLA, assignments). An event is thin: type, time, object (type, id, href; the name only when the key may read the object), changed field names (never values), actor without person data (kind, via, key prefix of an API write). Only events about objects the role of the key may read; deleted objects with the read right on their module. Without after and since: the events of the last 24 hours plus a cursor to continue. At most the last 30 days; an older since is clamped. Pass next_cursor as after in the next call; has_more true means call again at once. Deduplicate by id.",
+					"description_de": "Ereignisse nach einem Cursor, älteste zuerst: Änderungen aus dem Änderungsprotokoll (created, updated, status_changed, deleted, commented, approved, rejected) und Fachereignisse (Fristen, Fälligkeiten, SLA, Zuweisungen). Ein Ereignis ist schlank: Art, Zeitpunkt, Objekt (Art, ID, href; den Namen nur, wenn der Schlüssel das Objekt lesen darf), Namen der geänderten Felder (nie Werte), Akteur ohne Personendaten (kind, via, Präfix des Schlüssels bei Änderungen über die API). Nur Ereignisse zu Objekten, die die Rolle des Schlüssels lesen darf; gelöschte Objekte mit dem Leserecht auf ihr Modul. Ohne after und since: die Ereignisse der letzten 24 Stunden und ein Cursor zum Weiterlesen. Höchstens die letzten 30 Tage; ein älteres since wird gekürzt. next_cursor im nächsten Aufruf als after übergeben; has_more true heißt: sofort weiterlesen. Dubletten über die id erkennen.",
+					"params": [
+						{
+							"name": "after",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"maxLength": 200,
+							"description_en": "cursor: next_cursor of the previous answer (opaque)",
+							"description_de": "Cursor: next_cursor der vorigen Antwort (undurchsichtig)"
+						},
+						{
+							"name": "since",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"format": "date-time",
+							"description_en": "start time ISO 8601 with zone when there is no cursor; at most 30 days back",
+							"description_de": "Startzeit ISO 8601 mit Zone, wenn kein Cursor da ist; höchstens 30 Tage zurück"
+						},
+						{
+							"name": "types",
+							"in": "query",
+							"required": false,
+							"type": "string",
+							"nullable": false,
+							"description_en": "comma list of type patterns: task.*, incident.deadline, * (see /events/types)",
+							"description_de": "Kommaliste von Mustern der Art: task.*, incident.deadline, * (siehe /events/types)"
+						},
+						{
+							"name": "limit",
+							"in": "query",
+							"required": false,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"maximum": 200,
+							"default": 100,
+							"description_en": "events per page",
+							"description_de": "Ereignisse je Seite",
+							"role": "limit"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor",
+						"has_more_field": "has_more"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				],
+				"event_type": [
+					{
+						"operationId": "listEventTypes",
+						"method": "GET",
+						"path": "/events/types",
+						"query": {},
+						"items": "data",
+						"value": "type",
+						"label": "name",
+						"paginated": false,
+						"label_en": "Event types",
+						"label_de": "Ereignisarten"
+					}
+				]
+			}
+		},
+		{
+			"key": "webhook",
+			"label_en": "Webhook",
+			"label_en_plural": "Webhooks",
+			"label_de": "Webhook",
+			"label_de_plural": "Webhook",
+			"infrastructure": true,
+			"id": {
+				"name": "id",
+				"type": "integer"
+			},
+			"actions": [
+				{
+					"key": "create",
+					"label_en": "Subscribe to events",
+					"label_de": "Ereignisse abonnieren",
+					"operationId": "createWebhook",
+					"method": "POST",
+					"path": "/webhooks",
+					"scope": "data:read",
+					"summary_en": "Subscribe to events",
+					"summary_de": "Ereignisse abonnieren",
+					"description_en": "A new subscription of this key: target_url (https, public address, at most 2000 characters), events (patterns of the event catalog: a type such as task.updated, a prefix with * as last segment such as task.*, or * for all) and an optional description. The answer carries the secret whsec_… exactly once; store it to verify the signatures. Events are those the role of the key may read at delivery time; only events after the subscription are delivered. At most 20 subscriptions per key (403 quota_exceeded, reason webhooks); at most 10 creations and tests per minute and key. Each delivery is an HTTP POST of exactly one event (schema WebhookEvent) with the headers of Standard Webhooks: webhook-id (the event id, the same on every retry), webhook-timestamp (unix seconds) and webhook-signature (v1,<base64 HMAC-SHA256 of \"{webhook-id}.{webhook-timestamp}.{body}\" keyed with the base64-decoded part of the secret after whsec_), plus Content-Type application/json and User-Agent VantarIS-Webhooks/1. Any 2xx within 10 s is success; redirects are not followed and count as failure. Retries after 1 min, 5 min, 30 min, 2 h, 6 h, 12 h and 24 h, then the delivery is abandoned. A subscription with only failures for 3 days, or 50 abandoned deliveries in a row, is disabled (disabled_reason failing or abandoned) and the people who manage API keys are notified; so is every subscription of a key that is locked, expired, deleted or loses access.",
+					"description_de": "Ein neues Abonnement dieses Schlüssels: target_url (https, öffentliche Adresse, höchstens 2000 Zeichen), events (Muster aus dem Ereigniskatalog: eine Art wie task.updated, ein Präfix mit * als letztem Teil wie task.* oder * für alle) und eine optionale Beschreibung. Die Antwort enthält das Geheimnis whsec_… genau einmal; es wird zum Prüfen der Signaturen gebraucht. Zugestellt werden die Ereignisse, die die Rolle des Schlüssels zum Zeitpunkt der Zustellung lesen darf, und nur solche nach dem Anlegen. Höchstens 20 Abonnements je Schlüssel (403 quota_exceeded, reason webhooks); höchstens 10 Anlagen und Tests je Minute und Schlüssel. Jede Zustellung ist ein HTTP-POST mit genau einem Ereignis (Schema WebhookEvent) und den Kopfzeilen von Standard Webhooks: webhook-id (die Ereignis-ID, bei jeder Wiederholung gleich), webhook-timestamp (Unix-Sekunden) und webhook-signature (v1,<Base64 von HMAC-SHA256 über „{webhook-id}.{webhook-timestamp}.{Body}“ mit dem Base64-dekodierten Teil des Geheimnisses nach whsec_), dazu Content-Type application/json und User-Agent VantarIS-Webhooks/1. Erfolg ist jede 2xx-Antwort innerhalb von 10 s; Weiterleitungen werden nicht verfolgt und zählen als Fehler. Wiederholung nach 1 min, 5 min, 30 min, 2 h, 6 h, 12 h und 24 h, danach wird die Zustellung aufgegeben. Ein Abonnement mit drei Tagen nur Fehlschlägen oder 50 aufgegebenen Zustellungen in Folge wird abgeschaltet (disabled_reason failing oder abandoned) und die Verantwortlichen der API-Schlüssel werden benachrichtigt; ebenso jedes Abonnement eines Schlüssels, der gesperrt wird, abläuft, gelöscht wird oder den Zugang verliert.",
+					"params": [],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "target_url",
+								"required": true,
+								"type": "string",
+								"nullable": false,
+								"format": "uri",
+								"maxLength": 2000,
+								"description_en": "https address the events go to",
+								"description_de": "https-Adresse, an die die Ereignisse gehen"
+							},
+							{
+								"name": "events",
+								"required": true,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 50,
+								"minItems": 1,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "patterns: a type (task.updated), a prefix with * as last segment (task.*) or * for all",
+								"description_de": "Muster: eine Art (task.updated), ein Präfix mit * als letztem Teil (task.*) oder * für alle"
+							},
+							{
+								"name": "description",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"maxLength": 255,
+								"description_en": "free text, e.g. the flow it feeds",
+								"description_de": "Freitext, etwa der Ablauf, den es speist"
+							}
+						]
+					},
+					"response": {
+						"status": 201,
+						"kind": "object"
+					},
+					"paginated": false
+				},
+				{
+					"key": "get",
+					"label_en": "Get webhook",
+					"label_de": "Webhook abrufen",
+					"operationId": "getWebhook",
+					"method": "GET",
+					"path": "/webhooks/{id}",
+					"scope": "data:read",
+					"summary_en": "Webhook subscription",
+					"summary_de": "Webhook-Abonnement",
+					"description_en": "One subscription of this key; another key's is 404.",
+					"description_de": "Ein Abonnement dieses Schlüssels; das eines anderen Schlüssels ist 404.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "id of the subscription",
+							"description_de": "ID des Abonnements"
+						}
+					],
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "list",
+					"label_en": "List webhooks",
+					"label_de": "Webhooks auflisten",
+					"operationId": "listWebhooks",
+					"method": "GET",
+					"path": "/webhooks",
+					"scope": "data:read",
+					"summary_en": "Webhook subscriptions",
+					"summary_de": "Webhook-Abonnements",
+					"description_en": "The webhook subscriptions of this key (each key sees only its own, at most 20).",
+					"description_de": "Die Webhook-Abonnements dieses Schlüssels (jeder Schlüssel sieht nur seine eigenen, höchstens 20).",
+					"params": [],
+					"response": {
+						"status": 200,
+						"kind": "list",
+						"items_field": "data",
+						"next_cursor_field": "next_cursor"
+					},
+					"paginated": false
+				},
+				{
+					"key": "update",
+					"label_en": "Update webhook",
+					"label_de": "Webhook ändern",
+					"operationId": "updateWebhook",
+					"method": "PATCH",
+					"path": "/webhooks/{id}",
+					"scope": "data:read",
+					"summary_en": "Change a webhook subscription",
+					"summary_de": "Webhook-Abonnement ändern",
+					"description_en": "Only the fields sent: target_url, events, description, status (active or disabled). Switching on again resets the failure counters and starts with the events from now on; the time it was off is not delivered afterwards.",
+					"description_de": "Nur die gesendeten Felder: target_url, events, description, status (active oder disabled). Wieder einschalten setzt die Fehlerzähler zurück und beginnt mit den Ereignissen ab jetzt; die Zeit, in der es aus war, wird nicht nachgeliefert.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "id of the subscription",
+							"description_de": "ID des Abonnements"
+						}
+					],
+					"body": {
+						"content_type": "application/json",
+						"alternatives": [],
+						"required": true,
+						"fields": [
+							{
+								"name": "target_url",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"format": "uri",
+								"maxLength": 2000,
+								"description_en": "https address the events go to",
+								"description_de": "https-Adresse, an die die Ereignisse gehen"
+							},
+							{
+								"name": "events",
+								"required": false,
+								"type": "array",
+								"nullable": false,
+								"maxItems": 50,
+								"minItems": 1,
+								"items": {
+									"type": "string"
+								},
+								"description_en": "patterns: a type (task.updated), a prefix with * as last segment (task.*) or * for all",
+								"description_de": "Muster: eine Art (task.updated), ein Präfix mit * als letztem Teil (task.*) oder * für alle"
+							},
+							{
+								"name": "description",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"maxLength": 255,
+								"description_en": "free text, e.g. the flow it feeds",
+								"description_de": "Freitext, etwa der Ablauf, den es speist"
+							},
+							{
+								"name": "status",
+								"required": false,
+								"type": "string",
+								"nullable": false,
+								"enum": [
+									"active",
+									"disabled"
+								],
+								"description_en": "active or disabled",
+								"description_de": "aktiv oder abgeschaltet"
+							}
+						],
+						"min_properties": 1
+					},
+					"response": {
+						"status": 200,
+						"kind": "object",
+						"items_field": "data"
+					},
+					"paginated": false
+				},
+				{
+					"key": "delete",
+					"label_en": "Delete webhook",
+					"label_de": "Webhook löschen",
+					"operationId": "deleteWebhook",
+					"method": "DELETE",
+					"path": "/webhooks/{id}",
+					"scope": "data:read",
+					"summary_en": "Unsubscribe",
+					"summary_de": "Abonnement beenden",
+					"description_en": "Deletes the subscription with its delivery log; open deliveries are dropped.",
+					"description_de": "Löscht das Abonnement mit seinem Zustellprotokoll; offene Zustellungen entfallen.",
+					"params": [
+						{
+							"name": "id",
+							"in": "path",
+							"required": true,
+							"type": "integer",
+							"nullable": false,
+							"minimum": 1,
+							"description_en": "id of the subscription",
+							"description_de": "ID des Abonnements"
+						}
+					],
+					"response": {
+						"status": 204,
+						"kind": "empty"
+					},
+					"paginated": false
+				}
+			],
+			"lookups": {
+				"owner": [
+					{
+						"operationId": "listRoles",
+						"method": "GET",
+						"path": "/roles",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Roles (owner)",
+						"label_de": "Rollen (Verantwortlich)"
+					},
+					{
+						"operationId": "listEmployees",
+						"method": "GET",
+						"path": "/employees",
+						"query": {},
+						"items": "data",
+						"value": "ref",
+						"label": "name",
+						"paginated": true,
+						"label_en": "Employees (owner)",
+						"label_de": "Mitarbeiter (Verantwortlich)"
+					}
+				],
+				"tag": [
+					{
+						"operationId": "listTags",
+						"method": "GET",
+						"path": "/tags",
+						"query": {
+							"group": "tag"
+						},
+						"items": "data.0.terms",
+						"value": "",
+						"label": "",
+						"paginated": false,
+						"label_en": "Keywords",
+						"label_de": "Schlagworte"
+					}
+				]
+			}
+		}
+	],
+	"events": {
+		"catalog": [
+			{
+				"type": "asset.created",
+				"resource": "asset",
+				"label_en": "Asset created",
+				"label_de": "Asset angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "asset.updated",
+				"resource": "asset",
+				"label_en": "Asset updated",
+				"label_de": "Asset geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "asset.status_changed",
+				"resource": "asset",
+				"label_en": "Asset status changed",
+				"label_de": "Asset: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "asset.deleted",
+				"resource": "asset",
+				"label_en": "Asset deleted",
+				"label_de": "Asset gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "control.created",
+				"resource": "control",
+				"label_en": "Control created",
+				"label_de": "Maßnahme angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "control.updated",
+				"resource": "control",
+				"label_en": "Control updated",
+				"label_de": "Maßnahme geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "control.status_changed",
+				"resource": "control",
+				"label_en": "Control status changed",
+				"label_de": "Maßnahme: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "control.deleted",
+				"resource": "control",
+				"label_en": "Control deleted",
+				"label_de": "Maßnahme gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "scenario.created",
+				"resource": "scenario",
+				"label_en": "Scenario created",
+				"label_de": "Risikoszenario angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "scenario.updated",
+				"resource": "scenario",
+				"label_en": "Scenario updated",
+				"label_de": "Risikoszenario geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "scenario.deleted",
+				"resource": "scenario",
+				"label_en": "Scenario deleted",
+				"label_de": "Risikoszenario gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "process.created",
+				"resource": "process",
+				"label_en": "Process created",
+				"label_de": "Prozess angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "process.updated",
+				"resource": "process",
+				"label_en": "Process updated",
+				"label_de": "Prozess geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "process.status_changed",
+				"resource": "process",
+				"label_en": "Process status changed",
+				"label_de": "Prozess: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "process.deleted",
+				"resource": "process",
+				"label_en": "Process deleted",
+				"label_de": "Prozess gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "incident.created",
+				"resource": "incident",
+				"label_en": "Incident created",
+				"label_de": "Vorfall angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "incident.updated",
+				"resource": "incident",
+				"label_en": "Incident updated",
+				"label_de": "Vorfall geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "incident.status_changed",
+				"resource": "incident",
+				"label_en": "Incident status changed",
+				"label_de": "Vorfall: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "incident.deleted",
+				"resource": "incident",
+				"label_en": "Incident deleted",
+				"label_de": "Vorfall gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "incident.commented",
+				"resource": "incident",
+				"label_en": "Incident commented",
+				"label_de": "Vorfall kommentiert",
+				"description_en": "An object got a comment or a mail.",
+				"description_de": "Ein Objekt hat einen Kommentar oder eine Mail bekommen."
+			},
+			{
+				"type": "opportunity.created",
+				"resource": "opportunity",
+				"label_en": "Opportunity created",
+				"label_de": "Chance angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "opportunity.updated",
+				"resource": "opportunity",
+				"label_en": "Opportunity updated",
+				"label_de": "Chance geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "opportunity.status_changed",
+				"resource": "opportunity",
+				"label_en": "Opportunity status changed",
+				"label_de": "Chance: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "opportunity.deleted",
+				"resource": "opportunity",
+				"label_en": "Opportunity deleted",
+				"label_de": "Chance gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "tom.created",
+				"resource": "tom",
+				"label_en": "TOM created",
+				"label_de": "TOM angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "tom.updated",
+				"resource": "tom",
+				"label_en": "TOM updated",
+				"label_de": "TOM geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "tom.status_changed",
+				"resource": "tom",
+				"label_en": "TOM status changed",
+				"label_de": "TOM: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "tom.deleted",
+				"resource": "tom",
+				"label_en": "TOM deleted",
+				"label_de": "TOM gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "requirement.created",
+				"resource": "requirement",
+				"label_en": "Requirement created",
+				"label_de": "Anforderung angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "requirement.updated",
+				"resource": "requirement",
+				"label_en": "Requirement updated",
+				"label_de": "Anforderung geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "requirement.status_changed",
+				"resource": "requirement",
+				"label_en": "Requirement status changed",
+				"label_de": "Anforderung: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "requirement.deleted",
+				"resource": "requirement",
+				"label_en": "Requirement deleted",
+				"label_de": "Anforderung gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "requirement.commented",
+				"resource": "requirement",
+				"label_en": "Requirement commented",
+				"label_de": "Anforderung kommentiert",
+				"description_en": "An object got a comment or a mail.",
+				"description_de": "Ein Objekt hat einen Kommentar oder eine Mail bekommen."
+			},
+			{
+				"type": "standard.created",
+				"resource": "standard",
+				"label_en": "Standard created",
+				"label_de": "Norm angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "standard.updated",
+				"resource": "standard",
+				"label_en": "Standard updated",
+				"label_de": "Norm geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "standard.status_changed",
+				"resource": "standard",
+				"label_en": "Standard status changed",
+				"label_de": "Norm: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "standard.deleted",
+				"resource": "standard",
+				"label_en": "Standard deleted",
+				"label_de": "Norm gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "legal.created",
+				"resource": "legal",
+				"label_en": "Legal register entry created",
+				"label_de": "Rechtskataster-Eintrag angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "legal.updated",
+				"resource": "legal",
+				"label_en": "Legal register entry updated",
+				"label_de": "Rechtskataster-Eintrag geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "legal.deleted",
+				"resource": "legal",
+				"label_en": "Legal register entry deleted",
+				"label_de": "Rechtskataster-Eintrag gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "task.created",
+				"resource": "task",
+				"label_en": "Task created",
+				"label_de": "Aufgabe angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "task.updated",
+				"resource": "task",
+				"label_en": "Task updated",
+				"label_de": "Aufgabe geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "task.status_changed",
+				"resource": "task",
+				"label_en": "Task status changed",
+				"label_de": "Aufgabe: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "task.deleted",
+				"resource": "task",
+				"label_en": "Task deleted",
+				"label_de": "Aufgabe gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "task.commented",
+				"resource": "task",
+				"label_en": "Task commented",
+				"label_de": "Aufgabe kommentiert",
+				"description_en": "An object got a comment or a mail.",
+				"description_de": "Ein Objekt hat einen Kommentar oder eine Mail bekommen."
+			},
+			{
+				"type": "product.created",
+				"resource": "product",
+				"label_en": "Product created",
+				"label_de": "Produkt angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "product.updated",
+				"resource": "product",
+				"label_en": "Product updated",
+				"label_de": "Produkt geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "product.status_changed",
+				"resource": "product",
+				"label_en": "Product status changed",
+				"label_de": "Produkt: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "product.deleted",
+				"resource": "product",
+				"label_en": "Product deleted",
+				"label_de": "Produkt gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "ai_system.created",
+				"resource": "ai_system",
+				"label_en": "AI system created",
+				"label_de": "KI-System angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "ai_system.updated",
+				"resource": "ai_system",
+				"label_en": "AI system updated",
+				"label_de": "KI-System geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "ai_system.status_changed",
+				"resource": "ai_system",
+				"label_en": "AI system status changed",
+				"label_de": "KI-System: Status geändert",
+				"description_en": "The status of an object changed (instead of updated, changes contains status).",
+				"description_de": "Der Status eines Objekts hat sich geändert (statt updated, changes enthält status)."
+			},
+			{
+				"type": "ai_system.deleted",
+				"resource": "ai_system",
+				"label_en": "AI system deleted",
+				"label_de": "KI-System gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "questionnaire_template.created",
+				"resource": "questionnaire_template",
+				"label_en": "Questionnaire template created",
+				"label_de": "Fragebogen-Vorlage angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "questionnaire_template.updated",
+				"resource": "questionnaire_template",
+				"label_en": "Questionnaire template updated",
+				"label_de": "Fragebogen-Vorlage geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "questionnaire_template.deleted",
+				"resource": "questionnaire_template",
+				"label_en": "Questionnaire template deleted",
+				"label_de": "Fragebogen-Vorlage gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "questionnaire_run.created",
+				"resource": "questionnaire_run",
+				"label_en": "Questionnaire run created",
+				"label_de": "Fragebogen-Durchlauf angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "questionnaire_run.updated",
+				"resource": "questionnaire_run",
+				"label_en": "Questionnaire run updated",
+				"label_de": "Fragebogen-Durchlauf geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "questionnaire_run.deleted",
+				"resource": "questionnaire_run",
+				"label_en": "Questionnaire run deleted",
+				"label_de": "Fragebogen-Durchlauf gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "techsec_domain.created",
+				"resource": "techsec_domain",
+				"label_en": "Domain (technical check) created",
+				"label_de": "Domain (Technische Prüfung) angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "techsec_domain.updated",
+				"resource": "techsec_domain",
+				"label_en": "Domain (technical check) updated",
+				"label_de": "Domain (Technische Prüfung) geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "techsec_domain.deleted",
+				"resource": "techsec_domain",
+				"label_en": "Domain (technical check) deleted",
+				"label_de": "Domain (Technische Prüfung) gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "techsec_run.created",
+				"resource": "techsec_run",
+				"label_en": "Run (technical check) created",
+				"label_de": "Messlauf (Technische Prüfung) angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "techsec_run.updated",
+				"resource": "techsec_run",
+				"label_en": "Run (technical check) updated",
+				"label_de": "Messlauf (Technische Prüfung) geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "techsec_run.deleted",
+				"resource": "techsec_run",
+				"label_en": "Run (technical check) deleted",
+				"label_de": "Messlauf (Technische Prüfung) gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "pentest.created",
+				"resource": "pentest",
+				"label_en": "Penetration test created",
+				"label_de": "Penetrationstest angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "pentest.updated",
+				"resource": "pentest",
+				"label_en": "Penetration test updated",
+				"label_de": "Penetrationstest geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "pentest.deleted",
+				"resource": "pentest",
+				"label_en": "Penetration test deleted",
+				"label_de": "Penetrationstest gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "techsec_host.created",
+				"resource": "techsec_host",
+				"label_en": "Monitoring host created",
+				"label_de": "Monitoring-Host angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "techsec_host.updated",
+				"resource": "techsec_host",
+				"label_en": "Monitoring host updated",
+				"label_de": "Monitoring-Host geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "techsec_host.deleted",
+				"resource": "techsec_host",
+				"label_en": "Monitoring host deleted",
+				"label_de": "Monitoring-Host gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "techsec_endpoint.created",
+				"resource": "techsec_endpoint",
+				"label_en": "Monitoring endpoint created",
+				"label_de": "Monitoring-Endpunkt angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "techsec_endpoint.updated",
+				"resource": "techsec_endpoint",
+				"label_en": "Monitoring endpoint updated",
+				"label_de": "Monitoring-Endpunkt geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "techsec_endpoint.deleted",
+				"resource": "techsec_endpoint",
+				"label_en": "Monitoring endpoint deleted",
+				"label_de": "Monitoring-Endpunkt gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "document.created",
+				"resource": "document",
+				"label_en": "Document created",
+				"label_de": "Dokument angelegt",
+				"description_en": "An object was created.",
+				"description_de": "Ein Objekt wurde angelegt."
+			},
+			{
+				"type": "document.updated",
+				"resource": "document",
+				"label_en": "Document updated",
+				"label_de": "Dokument geändert",
+				"description_en": "An object was changed; changes names the fields, never the values.",
+				"description_de": "Ein Objekt wurde geändert; changes nennt die Felder, nie die Werte."
+			},
+			{
+				"type": "document.deleted",
+				"resource": "document",
+				"label_en": "Document deleted",
+				"label_de": "Dokument gelöscht",
+				"description_en": "An object was deleted; visible with the read right on the module.",
+				"description_de": "Ein Objekt wurde gelöscht; sichtbar mit dem Leserecht auf das Modul."
+			},
+			{
+				"type": "document.approved",
+				"resource": "document",
+				"label_en": "Document approved",
+				"label_de": "Dokument freigegeben",
+				"description_en": "A document was approved.",
+				"description_de": "Ein Dokument wurde freigegeben."
+			},
+			{
+				"type": "document.rejected",
+				"resource": "document",
+				"label_en": "Document rejected",
+				"label_de": "Dokument abgelehnt",
+				"description_en": "A document was rejected in the approval workflow.",
+				"description_de": "Ein Dokument wurde im Freigabe-Workflow abgelehnt."
+			},
+			{
+				"type": "doc.review_requested",
+				"resource": "document",
+				"label_en": "Document: review requested",
+				"label_de": "Dokument: Prüfung angefordert",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "doc.approval_requested",
+				"resource": "document",
+				"label_en": "Document: approval requested",
+				"label_de": "Dokument: Freigabe angefordert",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "doc.approved",
+				"resource": "document",
+				"label_en": "Document approved (notification)",
+				"label_de": "Dokument freigegeben (Benachrichtigung)",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "doc.rejected",
+				"resource": "document",
+				"label_en": "Document rejected (notification)",
+				"label_de": "Dokument abgelehnt (Benachrichtigung)",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "doc.review_due",
+				"resource": "document",
+				"label_en": "Document reviews due",
+				"label_de": "Wiedervorlage von Dokumenten fällig",
+				"description_en": "Business event of the scheduled run; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis aus dem Nachtlauf; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "task.assigned",
+				"resource": "task",
+				"label_en": "Task assigned",
+				"label_de": "Aufgabe zugewiesen",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "task.due",
+				"resource": "task",
+				"label_en": "Task due",
+				"label_de": "Aufgabe fällig",
+				"description_en": "Business event of the scheduled run; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis aus dem Nachtlauf; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "incident.received",
+				"resource": "incident",
+				"label_en": "New report through a form or mail",
+				"label_de": "Neue Meldung über Formular oder Mail",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "incident.assigned",
+				"resource": "incident",
+				"label_en": "Incident assigned",
+				"label_de": "Vorfall zugewiesen",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "incident.deadline",
+				"resource": "incident",
+				"label_en": "Reporting deadline of an incident",
+				"label_de": "Meldefrist eines Vorfalls",
+				"description_en": "Business event of the scheduled run; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis aus dem Nachtlauf; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "incident.escalation",
+				"resource": "incident",
+				"label_en": "Escalation of a reporting deadline",
+				"label_de": "Eskalation einer Meldefrist",
+				"description_en": "Business event of the scheduled run; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis aus dem Nachtlauf; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "incident.sla",
+				"resource": "incident",
+				"label_en": "Response or resolution time of a ticket",
+				"label_de": "Antwort- oder Lösungszeit eines Tickets",
+				"description_en": "Business event of the scheduled run; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis aus dem Nachtlauf; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			},
+			{
+				"type": "incident.mail",
+				"resource": "incident",
+				"label_en": "New mail on an incident or ticket",
+				"label_de": "Neue Mail zu einem Vorfall oder Ticket",
+				"description_en": "Business event; exists only when VantarIS notified at least one person.",
+				"description_de": "Fachereignis; erscheint nur, wenn VantarIS mindestens eine Person benachrichtigt hat."
+			}
+		],
+		"patterns": [
+			{
+				"pattern": "*",
+				"label_en": "All events",
+				"label_de": "Alle Ereignisse"
+			},
+			{
+				"pattern": "asset.*",
+				"resource": "asset",
+				"label_en": "All Asset events",
+				"label_de": "Alle Ereignisse: Assets"
+			},
+			{
+				"pattern": "control.*",
+				"resource": "control",
+				"label_en": "All Control events",
+				"label_de": "Alle Ereignisse: Maßnahmen"
+			},
+			{
+				"pattern": "scenario.*",
+				"resource": "scenario",
+				"label_en": "All Risk Scenario events",
+				"label_de": "Alle Ereignisse: Risiken"
+			},
+			{
+				"pattern": "process.*",
+				"resource": "process",
+				"label_en": "All Process events",
+				"label_de": "Alle Ereignisse: Prozesse"
+			},
+			{
+				"pattern": "incident.*",
+				"resource": "incident",
+				"label_en": "All Incident events",
+				"label_de": "Alle Ereignisse: Tickets"
+			},
+			{
+				"pattern": "opportunity.*",
+				"resource": "opportunity",
+				"label_en": "All Opportunity events",
+				"label_de": "Alle Ereignisse: Chancen"
+			},
+			{
+				"pattern": "tom.*",
+				"resource": "tom",
+				"label_en": "All TOM events",
+				"label_de": "Alle Ereignisse: TOM"
+			},
+			{
+				"pattern": "requirement.*",
+				"resource": "requirement",
+				"label_en": "All Requirement events",
+				"label_de": "Alle Ereignisse: Anforderungen"
+			},
+			{
+				"pattern": "standard.*",
+				"resource": "standard",
+				"label_en": "All Standard events",
+				"label_de": "Alle Ereignisse: Normen"
+			},
+			{
+				"pattern": "legal.*",
+				"resource": "legal",
+				"label_en": "All Legal Requirement events",
+				"label_de": "Alle Ereignisse: Rechtskataster"
+			},
+			{
+				"pattern": "task.*",
+				"resource": "task",
+				"label_en": "All Task events",
+				"label_de": "Alle Ereignisse: Aufgaben"
+			},
+			{
+				"pattern": "product.*",
+				"resource": "product",
+				"label_en": "All Product events",
+				"label_de": "Alle Ereignisse: Produkte"
+			},
+			{
+				"pattern": "ai_system.*",
+				"resource": "ai_system",
+				"label_en": "All AI System events",
+				"label_de": "Alle Ereignisse: KI-Systeme"
+			},
+			{
+				"pattern": "questionnaire_template.*",
+				"resource": "questionnaire_template",
+				"label_en": "All Questionnaire template events",
+				"label_de": "Alle Ereignisse: Fragebogen-Vorlage"
+			},
+			{
+				"pattern": "questionnaire_run.*",
+				"resource": "questionnaire_run",
+				"label_en": "All Questionnaire Run events",
+				"label_de": "Alle Ereignisse: Fragebogen-Durchläufe"
+			},
+			{
+				"pattern": "techsec_domain.*",
+				"resource": "techsec_domain",
+				"label_en": "All Domain (technical check) events",
+				"label_de": "Alle Ereignisse: Domain (Technische Prüfung)"
+			},
+			{
+				"pattern": "techsec_run.*",
+				"resource": "techsec_run",
+				"label_en": "All Run (technical check) events",
+				"label_de": "Alle Ereignisse: Messlauf (Technische Prüfung)"
+			},
+			{
+				"pattern": "pentest.*",
+				"resource": "pentest",
+				"label_en": "All Penetration test events",
+				"label_de": "Alle Ereignisse: Penetrationstest"
+			},
+			{
+				"pattern": "techsec_host.*",
+				"resource": "techsec_host",
+				"label_en": "All Monitoring host events",
+				"label_de": "Alle Ereignisse: Monitoring-Host"
+			},
+			{
+				"pattern": "techsec_endpoint.*",
+				"resource": "techsec_endpoint",
+				"label_en": "All Monitoring endpoint events",
+				"label_de": "Alle Ereignisse: Monitoring-Endpunkt"
+			},
+			{
+				"pattern": "document.*",
+				"resource": "document",
+				"label_en": "All Document events",
+				"label_de": "Alle Ereignisse: Dokumente"
+			}
+		],
+		"feed": {
+			"operationId": "listEvents",
+			"method": "GET",
+			"path": "/events",
+			"scope": "data:read",
+			"summary_en": "Events (change stream)",
+			"summary_de": "Ereignisse (Änderungsstrom)",
+			"description_en": "Events after a cursor, oldest first: changes from the change log (created, updated, status_changed, deleted, commented, approved, rejected) and business events (deadlines, due dates, SLA, assignments). An event is thin: type, time, object (type, id, href; the name only when the key may read the object), changed field names (never values), actor without person data (kind, via, key prefix of an API write). Only events about objects the role of the key may read; deleted objects with the read right on their module. Without after and since: the events of the last 24 hours plus a cursor to continue. At most the last 30 days; an older since is clamped. Pass next_cursor as after in the next call; has_more true means call again at once. Deduplicate by id.",
+			"description_de": "Ereignisse nach einem Cursor, älteste zuerst: Änderungen aus dem Änderungsprotokoll (created, updated, status_changed, deleted, commented, approved, rejected) und Fachereignisse (Fristen, Fälligkeiten, SLA, Zuweisungen). Ein Ereignis ist schlank: Art, Zeitpunkt, Objekt (Art, ID, href; den Namen nur, wenn der Schlüssel das Objekt lesen darf), Namen der geänderten Felder (nie Werte), Akteur ohne Personendaten (kind, via, Präfix des Schlüssels bei Änderungen über die API). Nur Ereignisse zu Objekten, die die Rolle des Schlüssels lesen darf; gelöschte Objekte mit dem Leserecht auf ihr Modul. Ohne after und since: die Ereignisse der letzten 24 Stunden und ein Cursor zum Weiterlesen. Höchstens die letzten 30 Tage; ein älteres since wird gekürzt. next_cursor im nächsten Aufruf als after übergeben; has_more true heißt: sofort weiterlesen. Dubletten über die id erkennen.",
+			"params": [
+				{
+					"name": "after",
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"nullable": false,
+					"maxLength": 200,
+					"description_en": "cursor: next_cursor of the previous answer (opaque)",
+					"description_de": "Cursor: next_cursor der vorigen Antwort (undurchsichtig)"
+				},
+				{
+					"name": "since",
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"nullable": false,
+					"format": "date-time",
+					"description_en": "start time ISO 8601 with zone when there is no cursor; at most 30 days back",
+					"description_de": "Startzeit ISO 8601 mit Zone, wenn kein Cursor da ist; höchstens 30 Tage zurück"
+				},
+				{
+					"name": "types",
+					"in": "query",
+					"required": false,
+					"type": "string",
+					"nullable": false,
+					"description_en": "comma list of type patterns: task.*, incident.deadline, * (see /events/types)",
+					"description_de": "Kommaliste von Mustern der Art: task.*, incident.deadline, * (siehe /events/types)"
+				},
+				{
+					"name": "limit",
+					"in": "query",
+					"required": false,
+					"type": "integer",
+					"nullable": false,
+					"minimum": 1,
+					"maximum": 200,
+					"default": 100,
+					"description_en": "events per page",
+					"description_de": "Ereignisse je Seite",
+					"role": "limit"
+				}
+			],
+			"response": {
+				"status": 200,
+				"kind": "list",
+				"items_field": "data",
+				"next_cursor_field": "next_cursor",
+				"has_more_field": "has_more"
+			},
+			"paginated": false,
+			"after_param": "after",
+			"since_param": "since",
+			"types_param": "types",
+			"limit_max": 200,
+			"horizon_days": 30
+		},
+		"types": {
+			"operationId": "listEventTypes",
+			"method": "GET",
+			"path": "/events/types"
+		}
+	},
+	"webhooks": {
+		"subscribe": {
+			"operationId": "createWebhook",
+			"method": "POST",
+			"path": "/webhooks",
+			"scope": "data:read",
+			"summary_en": "Subscribe to events",
+			"summary_de": "Ereignisse abonnieren",
+			"description_en": "A new subscription of this key: target_url (https, public address, at most 2000 characters), events (patterns of the event catalog: a type such as task.updated, a prefix with * as last segment such as task.*, or * for all) and an optional description. The answer carries the secret whsec_… exactly once; store it to verify the signatures. Events are those the role of the key may read at delivery time; only events after the subscription are delivered. At most 20 subscriptions per key (403 quota_exceeded, reason webhooks); at most 10 creations and tests per minute and key. Each delivery is an HTTP POST of exactly one event (schema WebhookEvent) with the headers of Standard Webhooks: webhook-id (the event id, the same on every retry), webhook-timestamp (unix seconds) and webhook-signature (v1,<base64 HMAC-SHA256 of \"{webhook-id}.{webhook-timestamp}.{body}\" keyed with the base64-decoded part of the secret after whsec_), plus Content-Type application/json and User-Agent VantarIS-Webhooks/1. Any 2xx within 10 s is success; redirects are not followed and count as failure. Retries after 1 min, 5 min, 30 min, 2 h, 6 h, 12 h and 24 h, then the delivery is abandoned. A subscription with only failures for 3 days, or 50 abandoned deliveries in a row, is disabled (disabled_reason failing or abandoned) and the people who manage API keys are notified; so is every subscription of a key that is locked, expired, deleted or loses access.",
+			"description_de": "Ein neues Abonnement dieses Schlüssels: target_url (https, öffentliche Adresse, höchstens 2000 Zeichen), events (Muster aus dem Ereigniskatalog: eine Art wie task.updated, ein Präfix mit * als letztem Teil wie task.* oder * für alle) und eine optionale Beschreibung. Die Antwort enthält das Geheimnis whsec_… genau einmal; es wird zum Prüfen der Signaturen gebraucht. Zugestellt werden die Ereignisse, die die Rolle des Schlüssels zum Zeitpunkt der Zustellung lesen darf, und nur solche nach dem Anlegen. Höchstens 20 Abonnements je Schlüssel (403 quota_exceeded, reason webhooks); höchstens 10 Anlagen und Tests je Minute und Schlüssel. Jede Zustellung ist ein HTTP-POST mit genau einem Ereignis (Schema WebhookEvent) und den Kopfzeilen von Standard Webhooks: webhook-id (die Ereignis-ID, bei jeder Wiederholung gleich), webhook-timestamp (Unix-Sekunden) und webhook-signature (v1,<Base64 von HMAC-SHA256 über „{webhook-id}.{webhook-timestamp}.{Body}“ mit dem Base64-dekodierten Teil des Geheimnisses nach whsec_), dazu Content-Type application/json und User-Agent VantarIS-Webhooks/1. Erfolg ist jede 2xx-Antwort innerhalb von 10 s; Weiterleitungen werden nicht verfolgt und zählen als Fehler. Wiederholung nach 1 min, 5 min, 30 min, 2 h, 6 h, 12 h und 24 h, danach wird die Zustellung aufgegeben. Ein Abonnement mit drei Tagen nur Fehlschlägen oder 50 aufgegebenen Zustellungen in Folge wird abgeschaltet (disabled_reason failing oder abandoned) und die Verantwortlichen der API-Schlüssel werden benachrichtigt; ebenso jedes Abonnement eines Schlüssels, der gesperrt wird, abläuft, gelöscht wird oder den Zugang verliert.",
+			"params": [],
+			"body": {
+				"content_type": "application/json",
+				"alternatives": [],
+				"required": true,
+				"fields": [
+					{
+						"name": "target_url",
+						"required": true,
+						"type": "string",
+						"nullable": false,
+						"format": "uri",
+						"maxLength": 2000,
+						"description_en": "https address the events go to",
+						"description_de": "https-Adresse, an die die Ereignisse gehen"
+					},
+					{
+						"name": "events",
+						"required": true,
+						"type": "array",
+						"nullable": false,
+						"maxItems": 50,
+						"minItems": 1,
+						"items": {
+							"type": "string"
+						},
+						"description_en": "patterns: a type (task.updated), a prefix with * as last segment (task.*) or * for all",
+						"description_de": "Muster: eine Art (task.updated), ein Präfix mit * als letztem Teil (task.*) oder * für alle"
+					},
+					{
+						"name": "description",
+						"required": false,
+						"type": "string",
+						"nullable": false,
+						"maxLength": 255,
+						"description_en": "free text, e.g. the flow it feeds",
+						"description_de": "Freitext, etwa der Ablauf, den es speist"
+					}
+				]
+			},
+			"response": {
+				"status": 201,
+				"kind": "object"
+			},
+			"paginated": false
+		},
+		"unsubscribe": {
+			"operationId": "deleteWebhook",
+			"method": "DELETE",
+			"path": "/webhooks/{id}",
+			"scope": "data:read",
+			"summary_en": "Unsubscribe",
+			"summary_de": "Abonnement beenden",
+			"description_en": "Deletes the subscription with its delivery log; open deliveries are dropped.",
+			"description_de": "Löscht das Abonnement mit seinem Zustellprotokoll; offene Zustellungen entfallen.",
+			"params": [
+				{
+					"name": "id",
+					"in": "path",
+					"required": true,
+					"type": "integer",
+					"nullable": false,
+					"minimum": 1,
+					"description_en": "id of the subscription",
+					"description_de": "ID des Abonnements"
+				}
+			],
+			"response": {
+				"status": 204,
+				"kind": "empty"
+			},
+			"paginated": false
+		},
+		"get": {
+			"operationId": "getWebhook",
+			"method": "GET",
+			"path": "/webhooks/{id}",
+			"scope": "data:read",
+			"summary_en": "Webhook subscription",
+			"summary_de": "Webhook-Abonnement",
+			"description_en": "One subscription of this key; another key's is 404.",
+			"description_de": "Ein Abonnement dieses Schlüssels; das eines anderen Schlüssels ist 404.",
+			"params": [
+				{
+					"name": "id",
+					"in": "path",
+					"required": true,
+					"type": "integer",
+					"nullable": false,
+					"minimum": 1,
+					"description_en": "id of the subscription",
+					"description_de": "ID des Abonnements"
+				}
+			],
+			"response": {
+				"status": 200,
+				"kind": "object",
+				"items_field": "data"
+			},
+			"paginated": false
+		},
+		"signature": {
+			"scheme": "standard-webhooks",
+			"version": "v1",
+			"headers": {
+				"id": "webhook-id",
+				"timestamp": "webhook-timestamp",
+				"signature": "webhook-signature"
+			},
+			"secret_prefix": "whsec_",
+			"algorithm": "HMAC-SHA256",
+			"signed_content": "{id}.{timestamp}.{body}",
+			"tolerance_seconds": 300
+		}
+	},
+	"actor": {
+		"key_prefix": "vtk_ + first 4 characters of the key id",
+		"echo_field": "actor.key"
+	}
+}

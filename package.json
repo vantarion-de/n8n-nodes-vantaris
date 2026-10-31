@@ -1,0 +1,60 @@
+{
+	"name": "n8n-nodes-vantaris",
+	"version": "0.1.0",
+	"description": "n8n nodes for VantarIS (GRC): tickets, tasks, assets, risks, processes, documents and controls; instant and polling triggers",
+	"license": "MIT",
+	"homepage": "https://github.com/vantarion-de/n8n-nodes-vantaris#readme",
+	"keywords": [
+		"n8n-community-node-package",
+		"vantaris",
+		"grc",
+		"isms",
+		"compliance"
+	],
+	"author": {
+		"name": "VantarIS",
+		"email": "opensource@vantaris.app"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/vantarion-de/n8n-nodes-vantaris.git"
+	},
+	"scripts": {
+		"generate": "node scripts/generate.mjs && eslint --fix nodes/Vantaris/generated nodes/shared/generated && prettier --write nodes/Vantaris/generated nodes/shared/generated",
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"test": "n8n-node build && node --test \"test/*.test.cjs\"",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/VantarisApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/Vantaris/Vantaris.node.js",
+			"dist/nodes/VantarisTrigger/VantarisTrigger.node.js",
+			"dist/nodes/VantarisPollingTrigger/VantarisPollingTrigger.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "0.54.6",
+		"eslint": "9.32.0",
+		"n8n-core": "2.45.6",
+		"n8n-workflow": "2.45.4",
+		"prettier": "3.6.2",
+		"release-it": "^21.1.0",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}

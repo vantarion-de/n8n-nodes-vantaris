@@ -1,0 +1,4 @@
+dist
+node_modules
+*.tgz
+.n8n-node-cli

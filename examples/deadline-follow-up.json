@@ -1,0 +1,67 @@
+{
+  "name": "VantarIS: follow up reporting deadlines",
+  "nodes": [
+    {
+      "id": "d1",
+      "name": "Deadline reached",
+      "type": "n8n-nodes-vantaris.vantarisTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "3a4b5c6d-7e8f-4a0b-8c1d-2e3f4a5b6c7d",
+      "credentials": {
+        "vantarisApi": {
+          "id": "",
+          "name": "VantarIS account"
+        }
+      },
+      "parameters": {
+        "events": [
+          "incident.deadline"
+        ],
+        "ignoreOwnChanges": true,
+        "includeObject": true
+      }
+    },
+    {
+      "id": "d2",
+      "name": "Comment on ticket",
+      "type": "n8n-nodes-vantaris.vantaris",
+      "typeVersion": 1,
+      "position": [
+        260,
+        0
+      ],
+      "credentials": {
+        "vantarisApi": {
+          "id": "",
+          "name": "VantarIS account"
+        }
+      },
+      "parameters": {
+        "resource": "incident",
+        "operation": "addComment",
+        "incidentId": "={{ $json.object.id }}",
+        "textHtml": "={{ '<p>Reporting deadline stage ' + ($json.data.stage || '') + ' reached; owner informed by n8n.</p>' }}"
+      }
+    }
+  ],
+  "connections": {
+    "Deadline reached": {
+      "main": [
+        [
+          {
+            "node": "Comment on ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

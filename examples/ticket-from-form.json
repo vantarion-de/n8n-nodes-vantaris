@@ -1,0 +1,76 @@
+{
+  "name": "VantarIS: ticket from form",
+  "nodes": [
+    {
+      "id": "f1",
+      "name": "Report form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "7d0c1f5e-2a8b-4c1d-9f3e-5b6a7c8d9e0f",
+      "parameters": {
+        "formTitle": "Report a security incident",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Subject",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Description",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f2",
+      "name": "Create ticket",
+      "type": "n8n-nodes-vantaris.vantaris",
+      "typeVersion": 1,
+      "position": [
+        260,
+        0
+      ],
+      "credentials": {
+        "vantarisApi": {
+          "id": "",
+          "name": "VantarIS account"
+        }
+      },
+      "parameters": {
+        "resource": "incident",
+        "operation": "create",
+        "name": "={{ $json.Subject }}",
+        "additionalFields": {
+          "descriptionHtml": "={{ '<p>' + $json.Description + '</p>' }}"
+        },
+        "options": {
+          "idempotencyKey": "={{ 'form-' + $execution.id }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Report form": {
+      "main": [
+        [
+          {
+            "node": "Create ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
