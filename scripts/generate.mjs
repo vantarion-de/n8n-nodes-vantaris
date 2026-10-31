@@ -176,6 +176,7 @@ function buildAction(resource, action) {
 	}
 
 	const routing = { request: { method: action.method, url: `=${url}` }, output: { postReceive: [fn('handleResponse')] } };
+	if (pathParams.length) routing.send = { preSend: [fn('checkPath')] };
 	if (action.response.items_field) routing.output.postReceive.push({ type: 'rootProperty', properties: { property: action.response.items_field } });
 
 	if (action.key === 'list' || action.key === 'search') {
@@ -237,7 +238,7 @@ function buildAction(resource, action) {
 			hint: 'The name of the input binary field containing the file to be uploaded',
 			displayOptions: show(rv, ov),
 		});
-		routing.send = { ...(routing.send ?? {}), preSend: [fn('sendBinaryBody')] };
+		routing.send = { ...(routing.send ?? {}), preSend: [...(routing.send?.preSend ?? []), fn('sendBinaryBody')] };
 	}
 
 	// query parameters
@@ -322,7 +323,8 @@ const out = (rel, text) => {
 };
 
 const imports = [];
-if (usedFns.has('handleResponse')) imports.push("import { handleResponse } from '../../shared/transport';");
+const transportFns = ['checkPath', 'handleResponse'].filter((f) => usedFns.has(f));
+if (transportFns.length) imports.push(`import { ${transportFns.join(', ')} } from '../../shared/transport';`);
 if (usedFns.has('cursorPagination')) imports.push("import { cursorPagination } from '../../shared/pagination';");
 if (usedFns.has('sendBinaryBody')) imports.push("import { sendBinaryBody } from '../../shared/binary';");
 out(

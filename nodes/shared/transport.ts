@@ -12,7 +12,7 @@ import type {
 	IWebhookFunctions,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 export const CREDENTIAL_NAME = 'vantarisApi';
 
@@ -82,6 +82,22 @@ export function problemError(node: INode, status: number, body: unknown): NodeAp
 	const parsed = parseBody(body);
 	const payload = (parsed && typeof parsed === 'object' ? parsed : { body: String(parsed ?? '') }) as JsonObject;
 	return new NodeApiError(node, payload, { message, description, httpCode: String(status) });
+}
+
+/** Throws on a "." or ".." path segment: encodeURIComponent keeps dots, and URL parsing would move to another route. */
+export function assertNoDotSegments(node: INode, url: unknown): void {
+	const path = String(url ?? '').split(/[?#]/, 1)[0];
+	if (path.split('/').some((s) => s === '.' || s === '..')) {
+		throw new NodeOperationError(node, "A path segment must not be '.' or '..'", {
+			description: 'Check the IDs and the path; they must not climb to another route of the API.',
+		});
+	}
+}
+
+/** Declarative preSend of every operation with path parameters. */
+export async function checkPath(this: IExecuteSingleFunctions, request: IHttpRequestOptions): Promise<IHttpRequestOptions> {
+	assertNoDotSegments(this.getNode(), request.url);
+	return request;
 }
 
 /** Declarative postReceive: turns a problem answer into a readable error, unwraps "data" where present. */

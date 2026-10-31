@@ -195,3 +195,34 @@ test('API call: GET sends no body even with "Send Body" left over', async () => 
 		assert.equal(mock.requests[0].raw.length, 0);
 	});
 });
+
+test("an ID of '.' or '..' is refused before any request (it would climb to another route)", async () => {
+	await withMock(async (mock) => {
+		for (const [operation, extra] of [['get', {}], ['setStatus', { status: 'closed' }], ['addComment', { textHtml: 'x' }]]) {
+			for (const id of ['..', '.']) {
+				mock.reset(() => ({ status: 200, body: { ok: true, data: {} } }));
+				const { error } = await runNode({ baseUrl: 'https://vantaris.app', parameters: { resource: 'incident', operation, incidentId: id, ...extra } });
+				assert.match(String(error?.message), /must not be '\.' or '\.\.'/, `${operation} ${id}`);
+				assert.equal(mock.requests.length, 0, `${operation} ${id}: no request`);
+			}
+		}
+	});
+});
+
+test('API call: a path with dot segments is refused, an ID with dots inside is not', async () => {
+	await withMock(async (mock) => {
+		mock.reset(() => ({ status: 200, body: { ok: true, data: {} } }));
+		const bad = await runNode({
+			baseUrl: 'https://vantaris.app',
+			parameters: { resource: 'apiCall', operation: 'request', method: 'DELETE', path: 'tasks/5/../../webhooks/3' },
+		});
+		assert.match(String(bad.error?.message), /must not be '\.' or '\.\.'/);
+		assert.equal(mock.requests.length, 0);
+		const ok = await runNode({
+			baseUrl: 'https://vantaris.app',
+			parameters: { resource: 'apiCall', operation: 'request', method: 'GET', path: 'documents/a.b..c' },
+		});
+		assert.equal(ok.error, undefined, ok.error?.message);
+		assert.equal(mock.requests[0].url, 'https://vantaris.app/api/v1/documents/a.b..c');
+	});
+});

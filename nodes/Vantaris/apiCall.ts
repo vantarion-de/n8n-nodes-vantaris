@@ -6,12 +6,13 @@ import type {
 	INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { handleResponse } from '../shared/transport';
+import { assertNoDotSegments, handleResponse } from '../shared/transport';
 
 const showApiCall = { show: { resource: ['apiCall'] } };
 
 /** Declarative preSend of "API Call": query, JSON body and headers from the parameters. */
 export async function prepareApiCall(this: IExecuteSingleFunctions, request: IHttpRequestOptions): Promise<IHttpRequestOptions> {
+	assertNoDotSegments(this.getNode(), request.url);
 	const query = this.getNodeParameter('queryParameters', {}) as { parameter?: Array<{ name: string; value: string }> };
 	const qs: IDataObject = { ...(request.qs ?? {}) };
 	for (const p of query.parameter ?? []) if (p.name) qs[p.name] = p.value;

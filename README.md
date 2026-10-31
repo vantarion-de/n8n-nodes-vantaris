@@ -47,6 +47,9 @@ Operations of the **VantarIS** node:
   safe concurrent changes.
 - Errors of the API (RFC 9457 problem answers) are shown with status, code, reason and the affected fields, e.g.
   `VantarIS answered 422 Unprocessable Content (validation_failed)` / `Field 'name': required`.
+- IDs are URL-encoded, and a path segment `.` or `..` is refused before any request. **API Call** sends the path as
+  entered: if you build it from data of other systems (forms, mails), encode each inserted value with
+  `encodeURIComponent()`, so that it cannot point the request at another route.
 
 The resources and operations are generated from the integration profile of the VantarIS API
 (`profile/profile.json`, see [Development](#development)); new building blocks appear when the profile grows.

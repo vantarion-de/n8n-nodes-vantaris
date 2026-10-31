@@ -7,3 +7,6 @@
 - VantarIS Trigger: signed webhooks (Standard Webhooks), subscription on activation, removal on deactivation.
 - VantarIS Polling Trigger: event feed with cursor, deduplication and restart on an expired cursor.
 - Both triggers: event type filter, "Ignore Own Changes" (echo suppression), optional loading of the object.
+- Path segments `.` and `..` are refused before any request (IDs and API Call), so that no value can move a request
+  to another route of the API.
+- GitHub workflows: read-only token for the CI, no git credentials kept after checkout.
